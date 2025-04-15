@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <title>Brian2 Simulation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+    function applyPreset(value) {
+        if (!value) return;
+        const [th, r, sim, i] = value.split(',');
+        document.getElementById('threshold').value = th;
+        document.getElementById('reset').value = r;
+        document.getElementById('sim_time').value = sim;
+        document.getElementById('input_current').value = i;
+    }
+
+    function toggleNoiseOptions() {
+        const noiseOptions = document.getElementById('noise-options');
+        noiseOptions.style.display = document.getElementById('noise').checked ? 'block' : 'none';
+    }
+
+    window.onload = function () {
+        toggleNoiseOptions();
+    };
+    </script>
 </head>
 <body>
 <div class="container">
@@ -30,7 +49,21 @@
         <label>Input Current (I):</label>
         <input type="number" step="0.1" name="input_current" id="input_current" value="{{ input_current or 1.2 }}">
 
-        <label><input type="checkbox" name="noise" {% if noise %}checked{% endif %}> Add Noise</label>
+        <label>Number of Neurons:</label>
+        <input type="number" name="num_neurons" value="{{ num_neurons or 5 }}">
+
+        <label>Current Injection Start Time (ms):</label>
+        <input type="number" step="0.1" name="injection_start" value="{{ injection_start or 0.0 }}">
+
+        <label>Injection Duration (ms):</label>
+        <input type="number" step="0.1" name="injection_duration" value="{{ injection_duration or sim_time or 100 }}">
+
+        <label><input type="checkbox" name="noise" id="noise" onchange="toggleNoiseOptions()" {% if noise %}checked{% endif %}> Add Noise</label>
+
+        <div id="noise-options" style="display:none;">
+            <label>Noise Intensity:</label>
+            <input type="number" step="0.1" name="noise_intensity" value="{{ noise_intensity or 0.2 }}">
+        </div>
 
         <label>Output Type:</label>
         <select name="output_type">
@@ -44,10 +77,10 @@
 
     {% if img_url %}
     <div class="output">
-        <h2>📈 Output</h2>
+        <h2>📈 Membrane Potential Plot</h2>
         <img src="{{ img_url }}" alt="Graph Output">
         <br>
-        <a href="{{ img_url }}" download="membrane_plot.png">Download Membrane Plot</a>
+        <a href="{{ img_url }}" download="membrane_plot.png">Download PNG</a>
     </div>
     {% endif %}
 
@@ -56,27 +89,21 @@
         <h2>🔲 Spike Raster Plot</h2>
         <img src="{{ raster_url }}" alt="Raster Output">
         <br>
-        <a href="{{ raster_url }}" download="raster_plot.png">Download Raster Plot</a>
+        <a href="{{ raster_url }}" download="raster_plot.png">Download PNG</a>
     </div>
     {% endif %}
 
-    {% if data_url %}
+    {% if csv_url or json_url %}
     <div class="output">
         <h2>📄 Simulation Data</h2>
-        <a href="{{ data_url }}" download="sim_data.csv">Download Data (.csv)</a>
+        {% if csv_url %}
+        <a href="{{ csv_url }}" download="sim_data.csv">Download CSV</a><br>
+        {% endif %}
+        {% if json_url %}
+        <a href="{{ json_url }}" download="sim_data.json">Download JSON</a>
+        {% endif %}
     </div>
     {% endif %}
 </div>
-
-<script>
-function applyPreset(value) {
-    if (!value) return;
-    const [th, r, sim, i] = value.split(',');
-    document.getElementById('threshold').value = th;
-    document.getElementById('reset').value = r;
-    document.getElementById('sim_time').value = sim;
-    document.getElementById('input_current').value = i;
-}
-</script>
 </body>
 </html>

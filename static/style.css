@@ -6,7 +6,7 @@ body {
 
 .container {
     background: #fff;
-    max-width: 700px;
+    max-width: 800px;
     margin: auto;
     padding: 2em;
     border-radius: 10px;
@@ -15,6 +15,7 @@ body {
 
 h1 {
     text-align: center;
+    margin-bottom: 1em;
 }
 
 form {
@@ -27,16 +28,18 @@ input, select, button {
     padding: 0.6em;
     border-radius: 6px;
     border: 1px solid #ccc;
+    font-size: 1em;
 }
 
 button {
     background-color: #0055ff;
     color: white;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #0040cc;
+    background-color: #003fcc;
 }
 
 .output {
@@ -47,4 +50,21 @@ button:hover {
 .output img {
     max-width: 100%;
     border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+label {
+    font-weight: bold;
+}
+
+a {
+    display: inline-block;
+    margin-top: 0.5em;
+    color: #0055ff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
 }
