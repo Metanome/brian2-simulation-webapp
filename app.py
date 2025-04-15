@@ -1,5 +1,9 @@
 from flask import Flask, request, send_file, render_template
 from brian2 import *
+import os
+os.environ['MPLBACKEND'] = 'Agg'
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 
