@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrianSim Web: Neural Network Simulation</title>
+</head>
+<body>
+    <h1>Run Brian2 Simulation</h1>
+    <form action="/simulate" method="POST">
+        <label for="threshold">Threshold:</label>
+        <input type="text" id="threshold" name="threshold" value="1.0"><br><br>
+
+        <label for="reset">Reset:</label>
+        <input type="text" id="reset" name="reset" value="0.0"><br><br>
+
+        <label for="sim_time">Simulation Time (ms):</label>
+        <input type="text" id="sim_time" name="sim_time" value="100.0"><br><br>
+
+        <button type="submit">Run Simulation</button>
+    </form>
+
+    <h2>Simulation Output</h2>
+    <img src="{{ url_for('simulate') }}" alt="Simulation Output" />
+</body>
+</html>
