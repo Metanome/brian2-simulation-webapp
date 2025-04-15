@@ -2,25 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrianSim Web: Neural Network Simulation</title>
+    <title>BrianSim Web</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Run Brian2 Simulation</h1>
-    <form action="/simulate" method="POST">
-        <label for="threshold">Threshold:</label>
-        <input type="text" id="threshold" name="threshold" value="1.0"><br><br>
+    <div class="container">
+        <h1>🧠 Brian2 Simulation</h1>
 
-        <label for="reset">Reset:</label>
-        <input type="text" id="reset" name="reset" value="0.0"><br><br>
+        <form action="/simulate" method="POST">
+            <label for="preset">Preset:</label>
+            <select id="preset" onchange="applyPreset(this.value)">
+                <option value="">-- Select a Preset --</option>
+                <option value="1.0,0.0,100">Default LIF</option>
+                <option value="0.8,0.2,200">Quick Decay</option>
+                <option value="1.2,0.0,500">Long Run</option>
+            </select>
 
-        <label for="sim_time">Simulation Time (ms):</label>
-        <input type="text" id="sim_time" name="sim_time" value="100.0"><br><br>
+            <label for="threshold">Threshold:</label>
+            <input type="text" id="threshold" name="threshold" value="{{ threshold or 1.0 }}">
 
-        <button type="submit">Run Simulation</button>
-    </form>
+            <label for="reset">Reset:</label>
+            <input type="text" id="reset" name="reset" value="{{ reset or 0.0 }}">
 
-    <h2>Simulation Output</h2>
-    <img src="{{ url_for('simulate') }}" alt="Simulation Output" />
+            <label for="sim_time">Simulation Time (ms):</label>
+            <input type="text" id="sim_time" name="sim_time" value="{{ sim_time or 100 }}">
+
+            <button type="submit">Run Simulation</button>
+        </form>
+
+        {% if img_url %}
+        <div class="output">
+            <h2>📊 Output</h2>
+            <img src="{{ img_url }}" alt="Simulation Output">
+            <a href="{{ img_url }}" download="simulation_output.png">Download Image</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function applyPreset(val) {
+            if (!val) return;
+            const [th, r, sim] = val.split(',');
+            document.getElementById('threshold').value = th;
+            document.getElementById('reset').value = r;
+            document.getElementById('sim_time').value = sim;
+        }
+    </script>
 </body>
 </html>

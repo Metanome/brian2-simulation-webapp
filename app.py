@@ -47,7 +47,13 @@ def simulate():
 
     M = setup_brian_sim(threshold, reset, sim_time)
     image = plot_simulation(M)
-    return send_file(image, mimetype='image/png')
+
+    with open('static/sim_result.png', 'wb') as f:
+        f.write(image.read())
+        image.seek(0)
+
+    return render_template('index.html', img_url='/static/sim_result.png',
+                           threshold=threshold, reset=reset, sim_time=sim_time)
 
 if __name__ == '__main__':
     app.run(debug=True)
