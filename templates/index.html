@@ -1,52 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>BrianSim Web</title>
+    <title>Brian2 Simulation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>🧠 Brian2 Simulation</h1>
+<div class="container">
+    <h1>🧠 Brian2 Simulation</h1>
 
-        <form action="/simulate" method="POST">
-            <label for="preset">Preset:</label>
-            <select id="preset" onchange="applyPreset(this.value)">
-                <option value="">-- Select a Preset --</option>
-                <option value="1.0,0.0,100">Default LIF</option>
-                <option value="0.8,0.2,200">Quick Decay</option>
-                <option value="1.2,0.0,500">Long Run</option>
-            </select>
+    <form method="POST" action="/simulate">
+        <label>Preset:</label>
+        <select onchange="applyPreset(this.value)">
+            <option value="">-- Select Preset --</option>
+            <option value="1.0,0.0,100,1.2">Default LIF</option>
+            <option value="0.8,0.2,200,1.5">Fast Decay</option>
+            <option value="1.2,0.0,500,0.8">Slow Integrate</option>
+        </select>
 
-            <label for="threshold">Threshold:</label>
-            <input type="text" id="threshold" name="threshold" value="{{ threshold or 1.0 }}">
+        <label>Threshold:</label>
+        <input type="number" step="0.1" name="threshold" id="threshold" value="{{ threshold or 1.0 }}">
 
-            <label for="reset">Reset:</label>
-            <input type="text" id="reset" name="reset" value="{{ reset or 0.0 }}">
+        <label>Reset:</label>
+        <input type="number" step="0.1" name="reset" id="reset" value="{{ reset or 0.0 }}">
 
-            <label for="sim_time">Simulation Time (ms):</label>
-            <input type="text" id="sim_time" name="sim_time" value="{{ sim_time or 100 }}">
+        <label>Simulation Time (ms):</label>
+        <input type="number" name="sim_time" id="sim_time" value="{{ sim_time or 100 }}">
 
-            <button type="submit">Run Simulation</button>
-        </form>
+        <label>Input Current (I):</label>
+        <input type="number" step="0.1" name="input_current" id="input_current" value="{{ input_current or 1.2 }}">
 
-        {% if img_url %}
-        <div class="output">
-            <h2>📊 Output</h2>
-            <img src="{{ img_url }}" alt="Simulation Output">
-            <a href="{{ img_url }}" download="simulation_output.png">Download Image</a>
-        </div>
-        {% endif %}
+        <label><input type="checkbox" name="noise" {% if noise %}checked{% endif %}> Add Noise</label>
+
+        <label>Output Type:</label>
+        <select name="output_type">
+            <option value="voltage" {% if output_type == 'voltage' %}selected{% endif %}>Membrane Potential</option>
+            <option value="raster" {% if output_type == 'raster' %}selected{% endif %}>Spike Raster</option>
+            <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both</option>
+        </select>
+
+        <button type="submit">Run Simulation</button>
+    </form>
+
+    {% if img_url %}
+    <div class="output">
+        <h2>📈 Output</h2>
+        <img src="{{ img_url }}" alt="Graph Output">
+        <br>
+        <a href="{{ img_url }}" download="membrane_plot.png">Download Membrane Plot</a>
     </div>
+    {% endif %}
 
-    <script>
-        function applyPreset(val) {
-            if (!val) return;
-            const [th, r, sim] = val.split(',');
-            document.getElementById('threshold').value = th;
-            document.getElementById('reset').value = r;
-            document.getElementById('sim_time').value = sim;
-        }
-    </script>
+    {% if raster_url %}
+    <div class="output">
+        <h2>🔲 Spike Raster Plot</h2>
+        <img src="{{ raster_url }}" alt="Raster Output">
+        <br>
+        <a href="{{ raster_url }}" download="raster_plot.png">Download Raster Plot</a>
+    </div>
+    {% endif %}
+
+    {% if data_url %}
+    <div class="output">
+        <h2>📄 Simulation Data</h2>
+        <a href="{{ data_url }}" download="sim_data.csv">Download Data (.csv)</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function applyPreset(value) {
+    if (!value) return;
+    const [th, r, sim, i] = value.split(',');
+    document.getElementById('threshold').value = th;
+    document.getElementById('reset').value = r;
+    document.getElementById('sim_time').value = sim;
+    document.getElementById('input_current').value = i;
+}
+</script>
 </body>
 </html>
