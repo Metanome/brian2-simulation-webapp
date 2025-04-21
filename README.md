@@ -61,17 +61,12 @@ To run the project locally, follow these steps:
 
 ## Known Issues
 
-- **Synaptic Interactions Have No Visible Effect**: Enabling synaptic connections does not significantly affect spiking patterns. Could be due to low synaptic strength, randomness, or lack of synchronization between pre/post neurons.
-- **Current Injection Timing Bug**: Modifying `current_start` and `current_duration` often results in a flat line (no spiking), even when values seem valid. This mimics behavior as if no current is being applied at all — possibly due to an error in how the `TimedArray` is injected or indexed.
-- **Static Visualization**: The simulation plots are static images. No interactivity such as zooming, hovering, or live updates.
-- **No Live Plotting**: The app currently doesn't support real-time or dynamic plotting during the simulation.
 - **Performance Drop with Large Simulations**: Increasing neuron count or simulation time may lead to slower performance.
 
 ## Future Features
 
 - **Interactive Visualizations with Plotly**: Add interactive, dynamic plots for a more engaging user experience.
 - **Live Plot Option**: Implement real-time updates of the plots using JavaScript refresh techniques.
-- **Additional Presets**: Include more presets for different neuron models and configurations.
 
 ## License
 
