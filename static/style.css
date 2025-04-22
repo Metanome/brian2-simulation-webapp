@@ -1,70 +1,115 @@
+/*
+    Main stylesheet for the Brian2 simulation web app.
+    Styles the form, output, and layout for a clean, modern look.
+*/
+
+/* Basic body styling */
 body {
-    font-family: sans-serif;
-    background: #f2f2f2;
-    padding: 2em;
+    font-family: sans-serif; /* Use sans-serif font for the page */
+    background: #f2f2f2; /* Light gray background color */
+    padding: 2em; /* Add padding around the entire body */
 }
 
+/* Container styling */
 .container {
-    background: #fff;
-    max-width: 800px;
-    margin: auto;
-    padding: 2em;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    background: #fff; /* White background for the container */
+    max-width: 800px; /* Set the max width of the container */
+    margin: auto; /* Center the container */
+    padding: 2em; /* Add padding inside the container */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 0 20px rgba(0,0,0,0.1); /* Subtle shadow around the container */
 }
 
+/* Center the header */
 h1 {
-    text-align: center;
-    margin-bottom: 1em;
+    text-align: center; /* Center the heading */
+    margin-bottom: 1em; /* Space below the heading */
 }
 
+/* Styling for the form */
 form {
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
+    display: flex; /* Use flexbox layout */
+    flex-direction: column; /* Stack the form elements vertically */
+    gap: 1em; /* Add space between the form elements */
 }
 
+/* Input, select, and button common styles */
 input, select, button {
-    padding: 0.6em;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 1em;
+    padding: 0.6em; /* Padding inside input/select/button elements */
+    border-radius: 6px; /* Rounded corners for input/select/button */
+    border: 1px solid #ccc; /* Light border for input/select/button */
+    font-size: 1em; /* Standard font size */
 }
 
+/* Button styling */
 button {
-    background-color: #0055ff;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    background-color: #0055ff; /* Blue background for the button */
+    color: white; /* White text */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Smooth transition for background color on hover */
 }
 
+/* Button hover effect */
 button:hover {
-    background-color: #003fcc;
+    background-color: #003fcc; /* Darker blue background on hover */
 }
 
+/* Styling for output sections */
 .output {
-    margin-top: 2em;
-    text-align: center;
+    margin-top: 2em; /* Space above the output section */
+    text-align: center; /* Center align the output content */
 }
 
+/* Output images styling */
 .output img {
-    max-width: 100%;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 100%; /* Ensure the image is responsive */
+    border-radius: 10px; /* Rounded corners for the image */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Soft shadow around the image */
 }
 
+/* Label styling */
 label {
-    font-weight: bold;
+    font-weight: bold; /* Bold text for labels */
 }
 
+/* Anchor link styling */
 a {
-    display: inline-block;
-    margin-top: 0.5em;
-    color: #0055ff;
-    text-decoration: none;
-    font-weight: bold;
+    display: inline-block; /* Display links as inline-block */
+    margin-top: 0.5em; /* Space above the link */
+    color: #0055ff; /* Blue color for the link */
+    text-decoration: none; /* Remove underline from the link */
+    font-weight: bold; /* Bold text for the link */
 }
 
+/* Link hover effect */
 a:hover {
-    text-decoration: underline;
+    text-decoration: underline; /* Underline the link on hover */
+}
+
+/* Hidden class for elements that are not displayed */
+.hidden {
+    display: none; /* Hides elements */
+}
+
+/* Styling for the download section */
+.downloads {
+    margin-top: 2em; /* Space above the downloads section */
+}
+
+/* Styling for the download section header */
+.downloads h4 {
+    margin-bottom: 0.5em; /* Space below the header */
+}
+
+/* Styling for download links */
+.downloads a {
+    margin-right: 1em; /* Add space between download links */
+}
+
+/* Add to your style.css */
+.info-label {
+    display: block;
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 1em;
 }

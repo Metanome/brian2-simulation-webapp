@@ -3,107 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <title>Brian2 Simulation</title>
+    <!-- Link to external stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>
-    function applyPreset(value) {
-        if (!value) return;
-        const [th, r, sim, i] = value.split(',');
-        document.getElementById('threshold').value = th;
-        document.getElementById('reset').value = r;
-        document.getElementById('sim_time').value = sim;
-        document.getElementById('input_current').value = i;
-    }
-
-    function toggleNoiseOptions() {
-        const noiseOptions = document.getElementById('noise-options');
-        noiseOptions.style.display = document.getElementById('noise').checked ? 'block' : 'none';
-    }
-
-    window.onload = function () {
-        toggleNoiseOptions();
-    };
-    </script>
 </head>
 <body>
 <div class="container">
     <h1>🧠 Brian2 Simulation</h1>
 
-    <form method="POST" action="/simulate">
-        <label>Preset:</label>
-        <select onchange="applyPreset(this.value)">
-            <option value="">-- Select Preset --</option>
-            <option value="1.0,0.0,100,1.2">Default LIF</option>
-            <option value="0.8,0.2,200,1.5">Fast Decay</option>
-            <option value="1.2,0.0,500,0.8">Slow Integrate</option>
-        </select>
+    <!-- Show error messages -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul style="color: red;">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
 
-        <label>Threshold:</label>
-        <input type="number" step="0.1" name="threshold" id="threshold" value="{{ threshold or 1.0 }}">
+    <!-- Preset selector for quick configuration -->
+    <label for="preset">Presets:</label>
+    <select id="preset" onchange="applyPreset(this.value)">
+        <option value="custom">Custom (edit freely)</option>
+        <option value="lif_quickstart">LIF Quickstart (classic small network)</option>
+        <option value="balanced_random">Balanced Random Network (medium, more neurons, more noise)</option>
+        <option value="strongly_coupled">Strongly Coupled Network (dense, strong synapses, multiplicative noise)</option>
+        <option value="sparse_excitatory">Sparse Excitatory Network (small, weak coupling, sparse)</option>
+        <option value="inhibition_dominated">Inhibition-Dominated Network (medium, strong inhibition)</option>
+        <option value="noisy_single">Noisy Single Neuron (single cell, high noise)</option>
+        <option value="synchronous_bursting">Synchronous Bursting (medium, high coupling, low noise)</option>
+        <option value="minimal">Minimal Network (2 neurons, no noise, weak synapses)</option>
+    </select>
+    <small id="preset-desc" class="info-label">
+        Set your own parameters or pick a preset to see a typical network scenario.
+    </small>
 
-        <label>Reset:</label>
-        <input type="number" step="0.1" name="reset" id="reset" value="{{ reset or 0.0 }}">
+    <!-- Simulation input form -->
+    <form method="POST" action="/simulate" id="simForm">
+        <label>Threshold:
+            <input type="number" step="0.01" name="threshold" value="{{ threshold or 1.0 }}">
+        </label>
+        <small class="info-label">Membrane potential at which the neuron fires a spike.</small>
 
-        <label>Simulation Time (ms):</label>
-        <input type="number" name="sim_time" id="sim_time" value="{{ sim_time or 100 }}">
+        <label>Reset:
+            <input type="number" step="0.01" name="reset" value="{{ reset or 0.0 }}">
+        </label>
+        <small class="info-label">Membrane potential after a spike (reset value).</small>
 
-        <label>Input Current (I):</label>
-        <input type="number" step="0.1" name="input_current" id="input_current" value="{{ input_current or 1.2 }}">
+        <label>Simulation Time (ms):
+            <input type="number" step="1" name="sim_time" value="{{ sim_time or 100 }}">
+        </label>
+        <small class="info-label">Total duration of the simulation in milliseconds.</small>
 
-        <label>Number of Neurons:</label>
-        <input type="number" name="num_neurons" value="{{ num_neurons or 5 }}">
+        <label>Input Current:
+            <input type="number" step="0.01" name="input_current" value="{{ input_current or 1.2 }}">
+        </label>
+        <small class="info-label">External current injected into each neuron. (Each neuron receives a slightly different value for demonstration.)</small>
 
-        <label>Current Injection Start Time (ms):</label>
-        <input type="number" step="0.1" name="injection_start" value="{{ injection_start or 0.0 }}">
+        <label>Number of Neurons:
+            <input type="number" step="1" min="1" name="num_neurons" value="{{ num_neurons or 5 }}">
+        </label>
+        <small class="info-label">How many neurons to simulate in the network.</small>
 
-        <label>Injection Duration (ms):</label>
-        <input type="number" step="0.1" name="injection_duration" value="{{ injection_duration or sim_time or 100 }}">
+        <label>Current Start (ms):
+            <input type="number" step="1" min="0" name="current_start" value="{{ current_start or 0 }}">
+        </label>
+        <small class="info-label">Time when current injection begins.</small>
 
-        <label><input type="checkbox" name="noise" id="noise" onchange="toggleNoiseOptions()" {% if noise %}checked{% endif %}> Add Noise</label>
+        <label>Current Duration (ms):
+            <input type="number" step="1" min="0" name="current_duration" value="{{ current_duration or sim_time or 100 }}">
+        </label>
+        <small class="info-label">How long the current injection lasts.</small>
 
-        <div id="noise-options" style="display:none;">
-            <label>Noise Intensity:</label>
-            <input type="number" step="0.1" name="noise_intensity" value="{{ noise_intensity or 0.2 }}">
+        <label>
+            <input type="checkbox" name="noise" id="noise" {% if noise %}checked{% endif %} onchange="toggleNoiseOptions()">
+            Add Noise
+        </label>
+        <small class="info-label">Add random fluctuations to the input current (simulates biological noise).</small>
+        <div id="noise-options" style="display: none;">
+            <label>Noise Intensity:
+                <input type="number" step="0.01" name="noise_intensity" id="noise_intensity" value="{{ noise_intensity or 0.2 }}">
+            </label>
+            <small class="info-label">Strength of the noise added to the input current.</small>
+            <label>Noise Method:
+                <select name="noise_method" id="noise_method">
+                    <option value="additive" {% if noise_method == 'additive' %}selected{% endif %}>Additive</option>
+                    <option value="multiplicative" {% if noise_method == 'multiplicative' %}selected{% endif %}>Multiplicative</option>
+                </select>
+            </label>
+            <small class="info-label">Additive: noise is added to the current. Multiplicative: noise scales the current.</small>
         </div>
 
-        <label>Output Type:</label>
-        <select name="output_type">
-            <option value="voltage" {% if output_type == 'voltage' %}selected{% endif %}>Membrane Potential</option>
-            <option value="raster" {% if output_type == 'raster' %}selected{% endif %}>Spike Raster</option>
-            <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both</option>
-        </select>
+        <label>
+            <input type="checkbox" name="synapse" id="synapse" {% if synapse %}checked{% endif %} onchange="toggleSynapseOptions()">
+            Enable Synaptic Interactions
+        </label>
+        <small class="info-label">Allow neurons to interact via synapses (network connectivity). Synaptic events include a biologically realistic delay.</small>
+        <div id="synapse-options" style="display: none;">
+            <label>Synaptic Weight:
+                <input type="number" step="0.01" name="syn_weight" id="syn_weight" value="{{ syn_weight or 0.2 }}">
+            </label>
+            <small class="info-label">Strength of each synaptic connection (how much a spike affects other neurons).</small>
+            <label>Connection Probability:
+                <input type="number" step="0.01" min="0" max="1" name="syn_prob" id="syn_prob" value="{{ syn_prob or 0.2 }}">
+            </label>
+            <small class="info-label">Probability that any two neurons are connected by a synapse.</small>
+        </div>
+
+        <label>Output Type:
+            <select name="output_type" id="output_type">
+                <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both</option>
+                <option value="voltage" {% if output_type == 'voltage' %}selected{% endif %}>Voltage Only</option>
+                <option value="raster" {% if output_type == 'raster' %}selected{% endif %}>Raster Only</option>
+            </select>
+        </label>
+        <small class="info-label">Choose which plots to display: membrane voltage, spike raster, or both.</small>
 
         <button type="submit">Run Simulation</button>
+        <button type="button" onclick="resetDefaults()">Reset</button>
     </form>
 
+    <!-- Spinner shown while simulation runs -->
+    <div id="spinner" style="display:none;">
+        <span>Running simulation, please wait...</span>
+    </div>
+
+    <!-- Output plots and download links -->
     {% if img_url %}
     <div class="output">
-        <h2>📈 Membrane Potential Plot</h2>
-        <img src="{{ img_url }}" alt="Graph Output">
-        <br>
-        <a href="{{ img_url }}" download="membrane_plot.png">Download PNG</a>
+        <h4>Membrane Potential Plot</h4>
+        <img src="{{ img_url }}" alt="Membrane Potential Plot">
     </div>
     {% endif %}
 
     {% if raster_url %}
     <div class="output">
-        <h2>🔲 Spike Raster Plot</h2>
-        <img src="{{ raster_url }}" alt="Raster Output">
-        <br>
-        <a href="{{ raster_url }}" download="raster_plot.png">Download PNG</a>
+        <h4>Spike Raster Plot</h4>
+        <img src="{{ raster_url }}" alt="Spike Raster Plot">
     </div>
     {% endif %}
 
-    {% if csv_url or json_url %}
-    <div class="output">
-        <h2>📄 Simulation Data</h2>
-        {% if csv_url %}
-        <a href="{{ csv_url }}" download="sim_data.csv">Download CSV</a><br>
+    {% if data_url or json_url %}
+    <div class="downloads">
+        <h4>Download Simulation Data:</h4>
+        {% if data_url %}
+        <a href="{{ data_url }}" download>CSV</a>
         {% endif %}
         {% if json_url %}
-        <a href="{{ json_url }}" download="sim_data.json">Download JSON</a>
+        <a href="{{ json_url }}" download>JSON</a>
         {% endif %}
     </div>
     {% endif %}
+
+    {% if sim_time_seconds %}
+    <div class="info-label">
+        <strong>Simulation runtime:</strong> {{ "%.3f"|format(sim_time_seconds) }} seconds
+    </div>
+    {% endif %}
 </div>
+
+<!-- JavaScript for dynamic UI behavior (presets, toggles, etc.) -->
+<script>
+document.getElementById('simForm').onsubmit = function() {
+    document.getElementById('spinner').style.display = 'block';
+};
+
+const defaults = {
+    threshold: 1.0,
+    reset: 0.0,
+    sim_time: 100,
+    input_current: 1.2,
+    num_neurons: 5,
+    current_start: 0,
+    current_duration: 100,
+    noise: true,
+    noise_intensity: 0.2,
+    noise_method: "additive",
+    synapse: true,
+    syn_weight: 0.2,
+    syn_prob: 0.2,
+    output_type: "both"
+};
+
+const presetDescriptions = {
+    custom: "Set your own parameters or pick a preset to see a typical network scenario.",
+    lif_quickstart: "A classic Leaky Integrate-and-Fire (LIF) network with 5 neurons, moderate input, and sparse synapses. Great for quick demos.",
+    balanced_random: "A medium-sized network with 20 neurons, more noise, and sparse random connectivity. Useful for exploring asynchronous firing.",
+    strongly_coupled: "A large, densely connected network with strong synapses and multiplicative noise. Shows rich, collective dynamics.",
+    sparse_excitatory: "A small network with weak, sparse excitatory coupling and moderate noise. Good for observing isolated spikes.",
+    inhibition_dominated: "A medium network dominated by strong inhibitory synapses. Demonstrates suppression and competition.",
+    noisy_single: "A single neuron with high noise and no synapses. Useful for exploring stochastic firing and membrane fluctuations.",
+    synchronous_bursting: "A medium network with high synaptic weight and probability, low noise. Promotes synchronous bursts.",
+    minimal: "A minimal network of 2 neurons, no noise, weak synapses. Useful for debugging and basic connectivity tests."
+};
+
+function applyPreset(preset) {
+    if (preset === "lif_quickstart") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.2, num_neurons: 5,
+            current_start: 0, current_duration: 100, noise: true, noise_intensity: 0.2,
+            noise_method: "additive", synapse: true, syn_weight: 0.2, syn_prob: 0.2, output_type: "both"
+        });
+    } else if (preset === "balanced_random") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.0, num_neurons: 20,
+            current_start: 0, current_duration: 200, noise: true, noise_intensity: 0.4,
+            noise_method: "additive", synapse: true, syn_weight: 0.3, syn_prob: 0.1, output_type: "both"
+        });
+    } else if (preset === "strongly_coupled") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 300, input_current: 1.5, num_neurons: 50,
+            current_start: 0, current_duration: 300, noise: true, noise_intensity: 0.5,
+            noise_method: "multiplicative", synapse: true, syn_weight: 0.8, syn_prob: 0.5, output_type: "both"
+        });
+    } else if (preset === "sparse_excitatory") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 150, input_current: 1.1, num_neurons: 10,
+            current_start: 0, current_duration: 150, noise: true, noise_intensity: 0.15,
+            noise_method: "additive", synapse: true, syn_weight: 0.1, syn_prob: 0.05, output_type: "both"
+        });
+    } else if (preset === "inhibition_dominated") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.3, num_neurons: 20,
+            current_start: 0, current_duration: 200, noise: true, noise_intensity: 0.25,
+            noise_method: "additive", synapse: true, syn_weight: -0.5, syn_prob: 0.2, output_type: "both"
+        });
+    } else if (preset === "noisy_single") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.0, num_neurons: 1,
+            current_start: 0, current_duration: 100, noise: true, noise_intensity: 0.5,
+            noise_method: "additive", synapse: false, syn_weight: 0.0, syn_prob: 0.0, output_type: "both"
+        });
+    } else if (preset === "synchronous_bursting") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 120, input_current: 1.4, num_neurons: 15,
+            current_start: 0, current_duration: 120, noise: true, noise_intensity: 0.1,
+            noise_method: "additive", synapse: true, syn_weight: 1.0, syn_prob: 0.8, output_type: "both"
+        });
+    } else if (preset === "minimal") {
+        setFields({
+            threshold: 1.0, reset: 0.0, sim_time: 50, input_current: 1.0, num_neurons: 2,
+            current_start: 0, current_duration: 50, noise: false, noise_intensity: 0.0,
+            noise_method: "additive", synapse: true, syn_weight: 0.05, syn_prob: 1.0, output_type: "both"
+        });
+    }
+    document.getElementById('preset-desc').innerText = presetDescriptions[preset] || presetDescriptions['custom'];
+    toggleNoiseOptions();
+    toggleSynapseOptions();
+}
+
+function setFields(values) {
+    document.querySelector('[name="threshold"]').value = values.threshold;
+    document.querySelector('[name="reset"]').value = values.reset;
+    document.querySelector('[name="sim_time"]').value = values.sim_time;
+    document.querySelector('[name="input_current"]').value = values.input_current;
+    document.querySelector('[name="num_neurons"]').value = values.num_neurons;
+    document.querySelector('[name="current_start"]').value = values.current_start;
+    document.querySelector('[name="current_duration"]').value = values.current_duration;
+    document.getElementById('noise').checked = values.noise;
+    document.getElementById('noise_intensity').value = values.noise_intensity;
+    document.getElementById('noise_method').value = values.noise_method;
+    document.getElementById('synapse').checked = values.synapse;
+    document.getElementById('syn_weight').value = values.syn_weight;
+    document.getElementById('syn_prob').value = values.syn_prob;
+    document.getElementById('output_type').value = values.output_type;
+}
+
+function resetDefaults() {
+    setFields(defaults);
+    document.getElementById('preset').value = "custom";
+    toggleNoiseOptions();
+    toggleSynapseOptions();
+}
+
+// Show/hide noise config options based on checkbox
+function toggleNoiseOptions() {
+    const noiseBox = document.getElementById('noise');
+    const noiseOptions = document.getElementById('noise-options');
+    noiseOptions.style.display = noiseBox.checked ? 'block' : 'none';
+}
+
+// Show/hide synapse config options based on checkbox
+function toggleSynapseOptions() {
+    const synBox = document.getElementById('synapse');
+    const synOptions = document.getElementById('synapse-options');
+    synOptions.style.display = synBox.checked ? 'block' : 'none';
+}
+
+// Run UI logic after page load to reflect checkbox states
+window.onload = () => {
+    toggleNoiseOptions();
+    toggleSynapseOptions();
+};
+</script>
 </body>
 </html>
