@@ -5,19 +5,23 @@ Users can configure neuron and network parameters, run simulations, visualize re
 
 ## Features
 
-- **Leaky Integrate-and-Fire (LIF) Neuron Simulation:**  
-  Simulate customizable networks of LIF neurons with adjustable parameters.
-- **Interactive Web Interface:**  
-  User-friendly form for setting thresholds, reset values, simulation time, input current, noise, synaptic weights, and more.
-- **Presets:**  
-  Quickly load common network configurations for demonstration or exploration.
-- **Visualization:**  
-  - Membrane potential plots for each neuron  
-  - Spike raster plots for network activity
-- **Data Export:**  
-  Download simulation results as CSV or JSON for further analysis.
-- **Automatic Cleanup:**  
-  Old output files are automatically deleted to save disk space.
+- **Multiple neuron models:** LIF, Izhikevich, AdEx, and custom equations.
+- **Network options:** Synaptic weights, connection probability, noise, and more.
+- **Presets:** Quick-start scenarios for common network types.
+- **Interactive and static plots:** View results with Plotly or Matplotlib.
+- **Download data:** Export simulation results as CSV or JSON.
+- **Responsive UI:** Modern, accessible, and mobile-friendly.
+- **Automatic Cleanup:** Old output files are automatically deleted to save disk space.
+
+## Requirements
+
+- Python 3.8+
+- [Brian2](https://brian2.readthedocs.io/)
+- Flask
+- matplotlib
+- pandas
+- numpy
+- plotly
 
 ## Usage
 
@@ -44,14 +48,26 @@ Users can configure neuron and network parameters, run simulations, visualize re
    Go to [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
 
 5. **Configure and run simulations:**  
-   - Adjust parameters or select a preset.
+   - Adjust parameters or select a preset in the left panel.
    - Click "Run Simulation" to see plots and download data.
+   - Use output options below the results to change plot type or output.
+
+## File Structure
+
+- `app.py` — Main Flask application and simulation logic.
+- `templates/index.html` — Main UI (Jinja2 template).
+- `static/style.css` — Stylesheet for the web UI.
+- `static/` — Folder for generated plots and data files.
+
+## Notes
+
+- **Temporary files** (plots/data) are auto-cleaned from `static/` after ~10 minutes.
+- **Custom models:** You can enter your own equations, threshold, and reset rules.
+- **Accessibility:** Tooltips and ARIA live regions are included for usability.
 
 ## Known Issues
 
 - Large simulations (many neurons or long durations) may take significant time to run and could cause the web interface to become unresponsive.
-- No progress bar or feedback for long-running simulations.
-- No persistent storage: all output files are deleted after 10 minutes.
 - Error messages may be generic for some simulation failures.
 
 ## Future Features
@@ -71,5 +87,6 @@ See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.
 
 - [Brian2](https://brian2.readthedocs.io/) for the simulation engine
 - [Flask](https://flask.palletsprojects.com/) for the web framework
+- [Plotly](https://plotly.com/python/) for interactive plotting
 
 *Developed by @Metanome*
