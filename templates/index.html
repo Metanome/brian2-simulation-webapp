@@ -119,6 +119,12 @@
         </label>
         <small class="info-label">Choose which plots to display: membrane voltage, spike raster, or both.</small>
 
+        <label for="plot_type">Plot Type:</label>
+        <select name="plot_type" id="plot_type">
+            <option value="interactive" {% if plot_type != 'static' %}selected{% endif %}>Interactive (Plotly)</option>
+            <option value="static" {% if plot_type == 'static' %}selected{% endif %}>Static (Matplotlib)</option>
+        </select>
+
         <button type="submit">Run Simulation</button>
         <button type="button" onclick="resetDefaults()">Reset</button>
     </form>
@@ -129,18 +135,32 @@
     </div>
 
     <!-- Output plots and download links -->
-    {% if img_url %}
-    <div class="output">
-        <h4>Membrane Potential Plot</h4>
-        <img src="{{ img_url }}" alt="Membrane Potential Plot">
-    </div>
-    {% endif %}
-
-    {% if raster_url %}
-    <div class="output">
-        <h4>Spike Raster Plot</h4>
-        <img src="{{ raster_url }}" alt="Spike Raster Plot">
-    </div>
+    {% if plot_type == 'static' %}
+        {% if img_url %}
+            <div class="output">
+                <h4>Membrane Potential Plot (Static)</h4>
+                <img src="{{ img_url }}" alt="Membrane Potential Plot">
+            </div>
+        {% endif %}
+        {% if raster_url %}
+            <div class="output">
+                <h4>Spike Raster Plot (Static)</h4>
+                <img src="{{ raster_url }}" alt="Spike Raster Plot">
+            </div>
+        {% endif %}
+    {% else %}
+        {% if plotly_voltage_html %}
+            <div class="output">
+                <h4>Membrane Potential Plot (Interactive)</h4>
+                {{ plotly_voltage_html|safe }}
+            </div>
+        {% endif %}
+        {% if plotly_raster_html %}
+            <div class="output">
+                <h4>Spike Raster Plot (Interactive)</h4>
+                {{ plotly_raster_html|safe }}
+            </div>
+        {% endif %}
     {% endif %}
 
     {% if data_url or json_url %}

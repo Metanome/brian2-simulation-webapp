@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import json
+import plotly.graph_objs as go
+import plotly.io as pio
 
 # Initialize Flask app and static folder for output files
 app = Flask(__name__)
@@ -40,9 +42,13 @@ def validate_inputs(threshold, reset, sim_time, input_current, num_neurons, curr
 def cleanup_static_folder(max_age_seconds=600):
     """
     Remove files older than max_age_seconds from the static folder to save disk space.
+    Do NOT delete permanent static assets like style.css.
     """
     now = time.time()
+    permanent_files = {'style.css'}
     for fname in os.listdir(STATIC_FOLDER):
+        if fname in permanent_files:
+            continue  # Skip permanent static files
         fpath = os.path.join(STATIC_FOLDER, fname)
         if os.path.isfile(fpath):
             if now - os.path.getmtime(fpath) > max_age_seconds:
@@ -80,6 +86,7 @@ def simulate():
         syn_weight = float(request.form.get('syn_weight', 0.2))
         syn_prob = float(request.form.get('syn_prob', 0.2))
         output_type = request.form.get('output_type', 'both')
+        plot_type = request.form.get('plot_type', 'interactive')
     except Exception as e:
         flash(f"Invalid input: {e}")
         return render_template('index.html')
@@ -105,6 +112,8 @@ def simulate():
     json_filename = f'sim_data_{unique_id}.json'
     
     sim_time_seconds = None  # For performance monitoring
+    plotly_voltage_html = None
+    plotly_raster_html = None
 
     # === Start Brian2 Simulation ===
     try:
@@ -166,33 +175,79 @@ def simulate():
     data_url = None
     json_url = None
 
-    # Plot membrane potentials
-    if output_type in ['voltage', 'both']:
-        plt.figure(figsize=(10, 4))
-        for i in range(num_neurons):
-            plt.plot(M.t/ms, M.v[i], label=f'Neuron {i}')
-        plt.xlabel('Time (ms)')
-        plt.ylabel('Membrane potential (v)')
-        plt.title('Membrane Potential Over Time')
-        plt.legend()
-        plt.tight_layout()
-        img_path = os.path.join(STATIC_FOLDER, img_filename)
-        plt.savefig(img_path)
-        img_url = f'/static/{img_filename}'
-        plt.close()
+    # Only generate static plots if requested
+    if plot_type == 'static':
+        if output_type in ['voltage', 'both']:
+            plt.figure(figsize=(10, 4))
+            for i in range(num_neurons):
+                plt.plot(M.t/ms, M.v[i], label=f'Neuron {i}')
+            plt.xlabel('Time (ms)')
+            plt.ylabel('Membrane potential (v)')
+            plt.title('Membrane Potential Over Time')
+            plt.legend()
+            plt.tight_layout()
+            img_path = os.path.join(STATIC_FOLDER, img_filename)
+            plt.savefig(img_path)
+            img_url = f'/static/{img_filename}'
+            plt.close()
 
-    # Plot spike raster
-    if output_type in ['raster', 'both']:
-        plt.figure(figsize=(10, 4))
-        plt.plot(spike_mon.t/ms, spike_mon.i, '.k')
-        plt.xlabel('Time (ms)')
-        plt.ylabel('Neuron index')
-        plt.title('Spike Raster Plot')
-        plt.tight_layout()
-        raster_path = os.path.join(STATIC_FOLDER, raster_filename)
-        plt.savefig(raster_path)
-        raster_url = f'/static/{raster_filename}'
-        plt.close()
+        if output_type in ['raster', 'both']:
+            plt.figure(figsize=(10, 4))
+            plt.plot(spike_mon.t/ms, spike_mon.i, '.k')
+            plt.xlabel('Time (ms)')
+            plt.ylabel('Neuron index')
+            plt.title('Spike Raster Plot')
+            plt.tight_layout()
+            raster_path = os.path.join(STATIC_FOLDER, raster_filename)
+            plt.savefig(raster_path)
+            raster_url = f'/static/{raster_filename}'
+            plt.close()
+
+    # Only generate interactive plots if requested (default)
+    if plot_type == 'interactive':
+        if output_type in ['voltage', 'both']:
+            traces = []
+            for i in range(num_neurons):
+                traces.append(go.Scatter(
+                    x=(M.t/ms),
+                    y=M.v[i],
+                    mode='lines',
+                    name=f'Neuron {i}'
+                ))
+            layout = go.Layout(
+                title='Membrane Potential Over Time',
+                xaxis=dict(title='Time (ms)'),
+                yaxis=dict(title='Membrane potential (v)'),
+                legend=dict(
+                    orientation='h',
+                    yanchor='top',
+                    y=-0.2,  # places legend below the x-axis label
+                    xanchor='center',
+                    x=0.5
+                ),
+                margin=dict(l=40, r=20, t=40, b=60),  # increase bottom margin for legend
+                height=350
+            )
+            fig = go.Figure(data=traces, layout=layout)
+            plotly_voltage_html = pio.to_html(fig, full_html=False)
+
+        if output_type in ['raster', 'both']:
+            trace = go.Scatter(
+                x=(spike_mon.t/ms),
+                y=spike_mon.i,
+                mode='markers',
+                marker=dict(color='black', size=6),
+                showlegend=False
+            )
+            layout = go.Layout(
+                title='Spike Raster Plot',
+                xaxis=dict(title='Time (ms)'),
+                yaxis=dict(title='Neuron index'),
+                margin=dict(l=40, r=20, t=40, b=40),
+                height=350
+            )
+            fig = go.Figure(data=[trace], layout=layout)
+            plotly_raster_html = pio.to_html(fig, full_html=False)
 
     # CSV Export: Save membrane potential traces
     df = pd.DataFrame({f"Neuron_{i}": M.v[i] for i in range(num_neurons)})
@@ -219,8 +274,11 @@ def simulate():
                            noise=noise_enabled, noise_intensity=noise_intensity, noise_method=noise_method,
                            synapse=synapse_enabled, syn_weight=syn_weight, syn_prob=syn_prob,
                            output_type=output_type,
+                           plot_type=plot_type,
                            img_url=img_url, raster_url=raster_url,
                            data_url=data_url, json_url=json_url,
+                           plotly_voltage_html=plotly_voltage_html,
+                           plotly_raster_html=plotly_raster_html,
                            sim_time_seconds=sim_time_seconds)
 
 @app.route('/static/<path:path>')
