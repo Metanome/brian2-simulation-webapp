@@ -1,115 +1,209 @@
 /*
     Main stylesheet for the Brian2 simulation web app.
     Styles the form, output, and layout for a clean, modern look.
+    Improved for clarity, accessibility, and modern feel.
 */
 
-/* Basic body styling */
+:root {
+    --primary: #0055ff;
+    --primary-dark: #003fcc;
+    --background: #f2f2f2;
+    --container-bg: #fff;
+    --border-radius: 10px;
+    --input-radius: 6px;
+    --shadow: 0 0 20px rgba(0,0,0,0.08);
+    --shadow-img: 0 4px 12px rgba(0,0,0,0.10);
+    --label-color: #222;
+    --info-color: #555;
+    --error-color: #d32f2f;
+    --focus-outline: 2px solid var(--primary);
+}
+
 body {
-    font-family: sans-serif; /* Use sans-serif font for the page */
-    background: #f2f2f2; /* Light gray background color */
-    padding: 2em; /* Add padding around the entire body */
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--background);
+    padding: 2em;
+    color: #222;
 }
 
-/* Container styling */
 .container {
-    background: #fff; /* White background for the container */
-    max-width: 800px; /* Set the max width of the container */
-    margin: auto; /* Center the container */
-    padding: 2em; /* Add padding inside the container */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 0 20px rgba(0,0,0,0.1); /* Subtle shadow around the container */
+    background: var(--container-bg);
+    max-width: 800px;
+    margin: auto;
+    padding: 2em;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
 }
 
-/* Center the header */
 h1 {
-    text-align: center; /* Center the heading */
-    margin-bottom: 1em; /* Space below the heading */
+    text-align: center;
+    margin-bottom: 1em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
-/* Styling for the form */
+.section-title {
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--primary-dark);
+    letter-spacing: 0.01em;
+}
+
+.form-group { margin-bottom: 1em; }
+.form-row { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; }
+.form-row label { min-width: 120px; color: var(--label-color); }
+@media (max-width: 600px) {
+    .form-row { flex-direction: column; align-items: flex-start; }
+    .container { padding: 1em; }
+}
+
 form {
-    display: flex; /* Use flexbox layout */
-    flex-direction: column; /* Stack the form elements vertically */
-    gap: 1em; /* Add space between the form elements */
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
 }
 
-/* Input, select, and button common styles */
-input, select, button {
-    padding: 0.6em; /* Padding inside input/select/button elements */
-    border-radius: 6px; /* Rounded corners for input/select/button */
-    border: 1px solid #ccc; /* Light border for input/select/button */
-    font-size: 1em; /* Standard font size */
+input, select, button, textarea {
+    padding: 0.6em;
+    border-radius: var(--input-radius);
+    border: 1px solid #ccc;
+    font-size: 1em;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    background: #fafbfc;
 }
 
-/* Button styling */
+input:focus, select:focus, textarea:focus {
+    outline: var(--focus-outline);
+    border-color: var(--primary);
+    background: #fff;
+}
+
 button {
-    background-color: #0055ff; /* Blue background for the button */
-    color: white; /* White text */
-    cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s ease; /* Smooth transition for background color on hover */
+    background-color: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    box-shadow: 0 2px 8px rgba(0,85,255,0.06);
 }
 
-/* Button hover effect */
-button:hover {
-    background-color: #003fcc; /* Darker blue background on hover */
+button:hover, button:focus {
+    background-color: var(--primary-dark);
 }
 
-/* Styling for output sections */
-.output {
-    margin-top: 2em; /* Space above the output section */
-    text-align: center; /* Center align the output content */
+button:active {
+    background-color: #002b80;
 }
 
-/* Output images styling */
-.output img {
-    max-width: 100%; /* Ensure the image is responsive */
-    border-radius: 10px; /* Rounded corners for the image */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Soft shadow around the image */
-}
-
-/* Label styling */
 label {
-    font-weight: bold; /* Bold text for labels */
+    font-weight: bold;
 }
 
-/* Anchor link styling */
-a {
-    display: inline-block; /* Display links as inline-block */
-    margin-top: 0.5em; /* Space above the link */
-    color: #0055ff; /* Blue color for the link */
-    text-decoration: none; /* Remove underline from the link */
-    font-weight: bold; /* Bold text for the link */
+.tooltip {
+    border-bottom: 1px dotted #333;
+    cursor: help;
+    color: var(--primary-dark);
+    margin-left: 0.3em;
+    font-size: 1em;
+    background: none;
 }
 
-/* Link hover effect */
-a:hover {
-    text-decoration: underline; /* Underline the link on hover */
-}
-
-/* Hidden class for elements that are not displayed */
-.hidden {
-    display: none; /* Hides elements */
-}
-
-/* Styling for the download section */
-.downloads {
-    margin-top: 2em; /* Space above the downloads section */
-}
-
-/* Styling for the download section header */
-.downloads h4 {
-    margin-bottom: 0.5em; /* Space below the header */
-}
-
-/* Styling for download links */
-.downloads a {
-    margin-right: 1em; /* Add space between download links */
-}
-
-/* Add to your style.css */
 .info-label {
     display: block;
-    font-size: 0.9em;
-    color: #555;
+    font-size: 0.92em;
+    color: var(--info-color);
     margin-bottom: 1em;
+    margin-left: 0.2em;
+}
+
+ul {
+    padding-left: 1.2em;
+}
+
+[aria-live="polite"] ul {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+.output {
+    margin-top: 2em;
+    text-align: center;
+}
+
+.output img {
+    max-width: 100%;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-img);
+    margin-top: 1em;
+}
+
+a {
+    display: inline-block;
+    margin-top: 0.5em;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+a:hover, a:focus {
+    text-decoration: underline;
+    color: var(--primary-dark);
+}
+
+.hidden {
+    display: none;
+}
+
+.downloads {
+    margin-top: 2em;
+}
+
+.downloads h4 {
+    margin-bottom: 0.5em;
+}
+
+.downloads a {
+    margin-right: 1em;
+}
+
+::-webkit-input-placeholder { color: #aaa; }
+::-moz-placeholder { color: #aaa; }
+:-ms-input-placeholder { color: #aaa; }
+::placeholder { color: #aaa; }
+
+input:disabled, select:disabled, textarea:disabled {
+    background: #eee;
+    color: #888;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Spinner overlay for loading */
+#spinner {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3em;
+    color: var(--primary-dark);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+/* Accessibility: focus style for keyboard navigation */
+.user-is-tabbing input:focus,
+.user-is-tabbing select:focus,
+.user-is-tabbing button:focus,
+.user-is-tabbing textarea:focus {
+    outline: 2.5px solid #ff9800;
+    outline-offset: 2px;
 }
