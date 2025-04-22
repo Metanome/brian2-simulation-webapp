@@ -120,7 +120,19 @@ def simulate():
                                current_start=current_start, current_duration=current_duration,
                                noise=noise_enabled, noise_intensity=noise_intensity, noise_method=noise_method,
                                synapse=synapse_enabled, syn_weight=syn_weight, syn_prob=syn_prob,
-                               output_type=output_type, plot_type=plot_type)
+                               output_type=output_type, plot_type=plot_type,
+                               neuron_model=request.form.get('neuron_model'),
+                               izh_a=request.form.get('izh_a', type=float),
+                               izh_b=request.form.get('izh_b', type=float),
+                               izh_c=request.form.get('izh_c', type=float),
+                               izh_d=request.form.get('izh_d', type=float),
+                               adex_a=request.form.get('adex_a', type=float),
+                               adex_b=request.form.get('adex_b', type=float),
+                               adex_deltaT=request.form.get('adex_deltaT', type=float),
+                               adex_tau_w=request.form.get('adex_tau_w', type=float),
+                               custom_eqs=custom_eqs,
+                               custom_threshold=custom_threshold,
+                               custom_reset=custom_reset)
 
     # === Unique filenames for this simulation ===
     unique_id = str(uuid.uuid4())
@@ -353,18 +365,40 @@ def simulate():
 
     # Render the results page with plots and download links
     return render_template('index.html',
-                           threshold=threshold, reset=reset, sim_time=sim_time,
-                           input_current=input_current, num_neurons=num_neurons,
-                           current_start=current_start, current_duration=current_duration,
-                           noise=noise_enabled, noise_intensity=noise_intensity, noise_method=noise_method,
-                           synapse=synapse_enabled, syn_weight=syn_weight, syn_prob=syn_prob,
+                           threshold=threshold,
+                           reset=reset,
+                           sim_time=sim_time,
+                           input_current=input_current,
+                           num_neurons=num_neurons,
+                           current_start=current_start,
+                           current_duration=current_duration,
+                           noise=noise_enabled,
+                           noise_intensity=noise_intensity,
+                           noise_method=noise_method,
+                           synapse=synapse_enabled,
+                           syn_weight=syn_weight,
+                           syn_prob=syn_prob,
                            output_type=output_type,
                            plot_type=plot_type,
-                           img_url=img_url, raster_url=raster_url,
-                           data_url=data_url, json_url=json_url,
+                           img_url=img_url,
+                           raster_url=raster_url,
+                           data_url=data_url,
+                           json_url=json_url,
                            plotly_voltage_html=plotly_voltage_html,
                            plotly_raster_html=plotly_raster_html,
-                           sim_time_seconds=sim_time_seconds)
+                           sim_time_seconds=sim_time_seconds,
+                           neuron_model=neuron_model,
+                           izh_a=request.form.get('izh_a', type=float),
+                           izh_b=request.form.get('izh_b', type=float),
+                           izh_c=request.form.get('izh_c', type=float),
+                           izh_d=request.form.get('izh_d', type=float),
+                           adex_a=request.form.get('adex_a', type=float),
+                           adex_b=request.form.get('adex_b', type=float),
+                           adex_deltaT=request.form.get('adex_deltaT', type=float),
+                           adex_tau_w=request.form.get('adex_tau_w', type=float),
+                           custom_eqs=custom_eqs,
+                           custom_threshold=custom_threshold,
+                           custom_reset=custom_reset)
 
 @app.route('/static/<path:path>')
 def static_file(path):

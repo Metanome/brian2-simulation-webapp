@@ -6,278 +6,272 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="container">
-    <h1>🧠 Brian2 Simulation</h1>
+<div class="main-flex">
+    <div class="container options-panel">
+        <h1>🧠 Brian2 Simulation</h1>
 
-    <!-- Show error messages -->
-    <div aria-live="polite">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul style="color: red;">
-          {% for message in messages %}
-            <li>{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-    </div>
-
-    <div class="section-title">1. Neuron Model</div>
-    <div class="form-group form-row">
-        <label for="neuron_model">Neuron Model:</label>
-        <select id="neuron_model" name="neuron_model" onchange="showModelFields(this.value)">
-            <option value="lif">Leaky Integrate-and-Fire (LIF)</option>
-            <option value="izhikevich">Izhikevich</option>
-            <option value="adex">Adaptive Exponential (AdEx)</option>
-            <option value="custom">Custom</option>
-        </select>
-        <span class="tooltip" title="Choose the neuron model type.">?</span>
-    </div>
-
-    <!-- 2. Model-specific parameter fields -->
-    <div id="izhikevich-fields" class="form-group" style="display:none;">
-        <div class="form-row"><label>a: <input type="number" step="any" name="izh_a" value="0.02"></label></div>
-        <div class="form-row"><label>b: <input type="number" step="any" name="izh_b" value="0.2"></label></div>
-        <div class="form-row"><label>c: <input type="number" step="any" name="izh_c" value="-65"></label></div>
-        <div class="form-row"><label>d: <input type="number" step="any" name="izh_d" value="2"></label></div>
-    </div>
-    <div id="adex-fields" class="form-group" style="display:none;">
-        <div class="form-row"><label>a: <input type="number" step="any" name="adex_a" value="0.02"></label></div>
-        <div class="form-row"><label>b: <input type="number" step="any" name="adex_b" value="0.2"></label></div>
-        <div class="form-row"><label>&Delta;T: <input type="number" step="any" name="adex_deltaT" value="2"></label></div>
-        <div class="form-row"><label>&tau;<sub>w</sub>: <input type="number" step="any" name="adex_tau_w" value="30"></label></div>
-    </div>
-    <div id="custom-fields" class="form-group" style="display:none;">
-        <div class="form-row">
-            <label>Equations:<br>
-                <textarea name="custom_eqs" rows="4" cols="50" placeholder="dv/dt = ..."></textarea>
-            </label>
+        <!-- Show error messages -->
+        <div aria-live="polite">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="error-message-list">
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
         </div>
-        <div class="form-row">
-            <label>Threshold:<br>
-                <input type="text" name="custom_threshold" placeholder="e.g. v > 1"/>
-            </label>
-        </div>
-        <div class="form-row">
-            <label>Reset:<br>
-                <input type="text" name="custom_reset" placeholder="e.g. v = 0"/>
-            </label>
-        </div>
-    </div>    
 
-    <div class="section-title">2. Presets</div>
-    <div class="form-group form-row">
-        <label for="preset">Presets:</label>
-        <select id="preset" onchange="applyPreset(this.value)">
-            <option value="custom">Custom (edit freely)</option>
-            <option value="lif_quickstart">LIF Quickstart (classic small network)</option>
-            <option value="balanced_random">Balanced Random Network (medium, more neurons, more noise)</option>
-            <option value="strongly_coupled">Strongly Coupled Network (dense, strong synapses, multiplicative noise)</option>
-            <option value="sparse_excitatory">Sparse Excitatory Network (small, weak coupling, sparse)</option>
-            <option value="inhibition_dominated">Inhibition-Dominated Network (medium, strong inhibition)</option>
-            <option value="noisy_single">Noisy Single Neuron (single cell, high noise)</option>
-            <option value="synchronous_bursting">Synchronous Bursting (medium, high coupling, low noise)</option>
-            <option value="minimal">Minimal Network (2 neurons, no noise, weak synapses)</option>
-        </select>
-        <span class="tooltip" title="Quickly set parameters for common scenarios.">?</span>
-    </div>
-    <small id="preset-desc" class="info-label">
-        Set your own parameters or pick a preset to see a typical network scenario.
-    </small>
+        <div class="section-title">1. Neuron Model</div>
+        <div class="form-group form-row">
+            <label for="neuron_model">Neuron Model:</label>
+            <select id="neuron_model" name="neuron_model" onchange="showModelFields(this.value)">
+                <option value="lif" {% if neuron_model == 'lif' %}selected{% endif %}>Leaky Integrate-and-Fire (LIF)</option>
+                <option value="izhikevich" {% if neuron_model == 'izhikevich' %}selected{% endif %}>Izhikevich</option>
+                <option value="adex" {% if neuron_model == 'adex' %}selected{% endif %}>Adaptive Exponential (AdEx)</option>
+                <option value="custom" {% if neuron_model == 'custom' %}selected{% endif %}>Custom</option>
+            </select>
+            <span class="tooltip" title="Select the mathematical model for neuron behavior.">?</span>
+        </div>
 
-    <div class="section-title">3. Simulation Parameters</div>
-    <form method="POST" action="/simulate" id="simForm" autocomplete="off">
-        <div id="threshold-reset-fields" class="form-group">
+        <!-- 2. Model-specific parameter fields -->
+        <div id="izhikevich-fields" class="form-group" style="display:none;">
+            <div class="form-row"><label for="izh_a">a:</label> <input type="number" step="any" name="izh_a" id="izh_a" value="{{ izh_a or 0.02 }}"> <span class="tooltip" title="Recovery time constant (dimensionless)">?</span></div>
+            <div class="form-row"><label for="izh_b">b:</label> <input type="number" step="any" name="izh_b" id="izh_b" value="{{ izh_b or 0.2 }}"> <span class="tooltip" title="Sensitivity to subthreshold fluctuations (dimensionless)">?</span></div>
+            <div class="form-row"><label for="izh_c">c (mV):</label> <input type="number" step="any" name="izh_c" id="izh_c" value="{{ izh_c or -65 }}"> <span class="tooltip" title="After-spike reset potential (mV)">?</span></div>
+            <div class="form-row"><label for="izh_d">d:</label> <input type="number" step="any" name="izh_d" id="izh_d" value="{{ izh_d or 2 }}"> <span class="tooltip" title="After-spike reset of recovery variable (dimensionless)">?</span></div>
+        </div>
+        <div id="adex-fields" class="form-group" style="display:none;">
+            <div class="form-row"><label for="adex_a">a (nS):</label> <input type="number" step="any" name="adex_a" id="adex_a" value="{{ adex_a or 0.02 }}"> <span class="tooltip" title="Subthreshold adaptation conductance (nS)">?</span></div>
+            <div class="form-row"><label for="adex_b">b (pA):</label> <input type="number" step="any" name="adex_b" id="adex_b" value="{{ adex_b or 0.2 }}"> <span class="tooltip" title="Spike-triggered adaptation increment (pA)">?</span></div>
+            <div class="form-row"><label for="adex_deltaT">&Delta;T (mV):</label> <input type="number" step="any" name="adex_deltaT" id="adex_deltaT" value="{{ adex_deltaT or 2 }}"> <span class="tooltip" title="Sharpness parameter (mV)">?</span></div>
+            <div class="form-row"><label for="adex_tau_w">&tau;<sub>w</sub> (ms):</label> <input type="number" step="any" name="adex_tau_w" id="adex_tau_w" value="{{ adex_tau_w or 30 }}"> <span class="tooltip" title="Adaptation time constant (ms)">?</span></div>
+        </div>
+        <div id="custom-fields" class="form-group" style="display:none;">
             <div class="form-row">
-                <label for="threshold">
-                    Threshold:
-                    <input type="number" step="any" name="threshold" id="threshold" value="{{ threshold or 1.0 }}">
-                </label>
-                <label for="reset">
-                    Reset:
-                    <input type="number" step="any" name="reset" id="reset" value="{{ reset or 0.0 }}">
-                </label>
-                <span class="tooltip" title="Used for LIF only. Ignored for Izhikevich and AdEx.">?</span>
+                <label for="custom_eqs">Equations:</label>
+                <textarea name="custom_eqs" id="custom_eqs" rows="4" cols="50" placeholder="dv/dt = ...">{{ custom_eqs or '' }}</textarea>
+                <span class="tooltip" title="Define model equations using Brian2 syntax.">?</span>
             </div>
-            <small id="threshold-reset-help" class="info-label">
-                Used for LIF only. Ignored for Izhikevich and AdEx.
-            </small>
+            <div class="form-row">
+                <label for="custom_threshold">Threshold:</label>
+                <input type="text" name="custom_threshold" id="custom_threshold" placeholder="e.g. v > 1*mV" value="{{ custom_threshold or '' }}"/>
+                <span class="tooltip" title="Condition for firing a spike (e.g., v > -50*mV).">?</span>
+            </div>
+            <div class="form-row">
+                <label for="custom_reset">Reset:</label>
+                <input type="text" name="custom_reset" id="custom_reset" placeholder="e.g. v = -65*mV" value="{{ custom_reset or '' }}"/>
+                <span class="tooltip" title="Action taken after a spike (e.g., v = -70*mV).">?</span>
+            </div>
         </div>
 
+        <div class="section-title">2. Presets</div>
         <div class="form-group form-row">
-            <label>Simulation Time (ms):
-                <input type="number" step="1" name="sim_time" value="{{ sim_time or 100 }}">
-            </label>
-            <span class="tooltip" title="Total duration of the simulation in milliseconds.">?</span>
+            <label for="preset">Presets:</label>
+            <select id="preset" onchange="applyPreset(this.value)">
+                <option value="custom">Custom (edit freely)</option>
+                <option value="lif_quickstart">LIF Quickstart (classic small network)</option>
+                <option value="balanced_random">Balanced Random Network (medium, more neurons, more noise)</option>
+                <option value="strongly_coupled">Strongly Coupled Network (dense, strong synapses, multiplicative noise)</option>
+                <option value="sparse_excitatory">Sparse Excitatory Network (small, weak coupling, sparse)</option>
+                <option value="inhibition_dominated">Inhibition-Dominated Network (medium, strong inhibition)</option>
+                <option value="noisy_single">Noisy Single Neuron (single cell, high noise)</option>
+                <option value="synchronous_bursting">Synchronous Bursting (medium, high coupling, low noise)</option>
+                <option value="minimal">Minimal Network (2 neurons, no noise, weak synapses)</option>
+            </select>
+            <span class="tooltip" title="Quickly set parameters for common scenarios. Overrides current settings.">?</span>
         </div>
-
-        <div class="form-group form-row">
-            <label for="input_current">
-                Input Current:
-                <input type="number" step="any" name="input_current" id="input_current" value="{{ input_current or 1.2 }}">
-            </label>
-            <span class="tooltip" title="Units: Arbitrary for LIF/Izhikevich, pA for AdEx.">?</span>
-        </div>
-        <small id="input-current-help" class="info-label">
-            Units: Arbitrary for LIF/Izhikevich, pA for AdEx.
+        <small id="preset-desc" class="info-label">
+            Set your own parameters or pick a preset to see a typical network scenario.
         </small>
 
-        <div class="form-group form-row">
-            <label>Number of Neurons:
-                <input type="number" step="1" min="1" name="num_neurons" value="{{ num_neurons or 5 }}">
-            </label>
-            <span class="tooltip" title="How many neurons to simulate in the network.">?</span>
-        </div>
-
-        <div class="form-group form-row">
-            <label>Current Start (ms):
-                <input type="number" step="1" min="0" name="current_start" value="{{ current_start or 0 }}">
-            </label>
-            <span class="tooltip" title="Time when current injection begins.">?</span>
-        </div>
-
-        <div class="form-group form-row">
-            <label>Current Duration (ms):
-                <input type="number" step="1" min="0" name="current_duration" value="{{ current_duration or sim_time or 100 }}">
-            </label>
-            <span class="tooltip" title="How long the current injection lasts.">?</span>
-        </div>
-
-        <div class="section-title">4. Noise Options</div>
-        <div class="form-group form-row">
-            <label>
-                <input type="checkbox" name="noise" id="noise" {% if noise %}checked{% endif %} onchange="toggleNoiseOptions()">
-                Add Noise
-            </label>
-            <span class="tooltip" title="Add random fluctuations to the input current (simulates biological noise).">?</span>
-        </div>
-        <div id="noise-options" class="form-group" style="display: none;">
-            <div class="form-row">
-                <label>Noise Intensity:
-                    <input type="number" step="0.01" name="noise_intensity" id="noise_intensity" value="{{ noise_intensity or 0.2 }}">
-                </label>
-                <span class="tooltip" title="Strength of the noise added to the input current.">?</span>
+        <div class="section-title">3. Simulation Parameters</div>
+        <form method="POST" action="/simulate" id="simForm" autocomplete="off">
+            <div id="threshold-reset-fields" class="form-group">
+                <div class="form-row">
+                    <label for="threshold">Threshold (mV):</label>
+                    <input type="number" step="any" name="threshold" id="threshold" value="{{ threshold or 1.0 }}">
+                    <span class="tooltip" title="Membrane potential at which a spike is fired (mV). Used for LIF only.">?</span>
+                </div>
+                <div class="form-row">
+                    <label for="reset">Reset (mV):</label>
+                    <input type="number" step="any" name="reset" id="reset" value="{{ reset or 0.0 }}">
+                    <span class="tooltip" title="Membrane potential after a spike (mV). Used for LIF only.">?</span>
+                </div>
+                <small id="threshold-reset-help" class="info-label">
+                    Used for LIF only. Ignored for Izhikevich and AdEx.
+                </small>
             </div>
-            <div class="form-row">
-                <label>Noise Method:
+
+            <div class="form-group form-row">
+                <label for="sim_time">Simulation Time (ms):</label>
+                <input type="number" step="1" name="sim_time" id="sim_time" value="{{ sim_time or 100 }}">
+                <span class="tooltip" title="Total duration of the simulation in milliseconds.">?</span>
+            </div>
+
+            <div class="form-group form-row">
+                <label for="input_current">Input Current:</label>
+                <input type="number" step="any" name="input_current" id="input_current" value="{{ input_current or 1.2 }}">
+                <span class="tooltip" title="Constant current injected into neurons. Units: Arbitrary for LIF/Izhikevich, pA for AdEx.">?</span>
+            </div>
+            <small id="input-current-help" class="info-label">
+                Units: Arbitrary for LIF/Izhikevich, pA for AdEx.
+            </small>
+
+            <div class="form-group form-row">
+                <label for="num_neurons">Number of Neurons:</label>
+                <input type="number" step="1" min="1" name="num_neurons" id="num_neurons" value="{{ num_neurons or 5 }}">
+                <span class="tooltip" title="How many neurons to simulate in the network.">?</span>
+            </div>
+
+            <div class="form-group form-row">
+                <label for="current_start">Current Start (ms):</label>
+                <input type="number" step="1" min="0" name="current_start" id="current_start" value="{{ current_start or 0 }}">
+                <span class="tooltip" title="Time when current injection begins (ms).">?</span>
+            </div>
+
+            <div class="form-group form-row">
+                <label for="current_duration">Current Duration (ms):</label>
+                <input type="number" step="1" min="0" name="current_duration" id="current_duration" value="{{ current_duration or sim_time or 100 }}">
+                <span class="tooltip" title="How long the current injection lasts (ms).">?</span>
+            </div>
+
+            <div class="section-title">4. Noise Options</div>
+            <div class="form-group form-row">
+                <label for="noise">Add Noise:</label>
+                <input type="checkbox" name="noise" id="noise" {% if noise %}checked{% endif %} onchange="toggleNoiseOptions()">
+                <span class="tooltip" title="Add random fluctuations to the input current (simulates biological noise).">?</span>
+            </div>
+            <div id="noise-options" class="form-group" style="display: none;">
+                <div class="form-row">
+                    <label for="noise_intensity">Noise Intensity:</label>
+                    <input type="number" step="0.01" name="noise_intensity" id="noise_intensity" value="{{ noise_intensity or 0.2 }}">
+                    <span class="tooltip" title="Strength of the noise added to the input current (same units as input current).">?</span>
+                </div>
+                <div class="form-row">
+                    <label for="noise_method">Noise Method:</label>
                     <select name="noise_method" id="noise_method">
                         <option value="additive" {% if noise_method == 'additive' %}selected{% endif %}>Additive</option>
                         <option value="multiplicative" {% if noise_method == 'multiplicative' %}selected{% endif %}>Multiplicative</option>
                     </select>
-                </label>
-                <span class="tooltip" title="Additive: noise is added to the current. Multiplicative: noise scales the current.">?</span>
+                    <span class="tooltip" title="Additive: noise is added to the current. Multiplicative: noise scales the current.">?</span>
+                </div>
             </div>
-        </div>
 
-        <div class="section-title">5. Synaptic Interactions</div>
-        <div class="form-group form-row">
-            <label>
+            <div class="section-title">5. Synaptic Interactions</div>
+            <div class="form-group form-row">
+                <label for="synapse">Enable Synapses:</label>
                 <input type="checkbox" name="synapse" id="synapse" {% if synapse %}checked{% endif %} onchange="toggleSynapseOptions()">
-                Enable Synaptic Interactions
-            </label>
-            <span class="tooltip" title="Allow neurons to interact via synapses (network connectivity). Synaptic events include a biologically realistic delay.">?</span>
-        </div>
-        <div id="synapse-options" class="form-group" style="display: none;">
-            <div class="form-row">
-                <label>Synaptic Weight:
+                <span class="tooltip" title="Allow neurons to interact via synapses (network connectivity). Synaptic events include a biologically realistic delay.">?</span>
+            </div>
+            <div id="synapse-options" class="form-group" style="display: none;">
+                <div class="form-row">
+                    <label for="syn_weight">Synaptic Weight:</label>
                     <input type="number" step="0.01" name="syn_weight" id="syn_weight" value="{{ syn_weight or 0.2 }}">
-                </label>
-                <span class="tooltip" title="Strength of each synaptic connection (how much a spike affects other neurons).">?</span>
-            </div>
-            <div class="form-row">
-                <label>Connection Probability:
+                    <span class="tooltip" title="Strength of each synaptic connection (how much a spike affects other neurons). Units depend on model.">?</span>
+                </div>
+                <div class="form-row">
+                    <label for="syn_prob">Connection Probability:</label>
                     <input type="number" step="0.01" min="0" max="1" name="syn_prob" id="syn_prob" value="{{ syn_prob or 0.2 }}">
-                </label>
-                <span class="tooltip" title="Probability that any two neurons are connected by a synapse.">?</span>
+                    <span class="tooltip" title="Probability (0 to 1) that any two neurons are connected by a synapse.">?</span>
+                </div>
             </div>
+        </form>
+    </div> <!-- End options-panel -->
+
+    <div class="container output-panel">
+        <div class="output-placeholder" id="output-placeholder">
+            Simulation results will appear here.
         </div>
 
-        <div class="section-title">6. Output Options</div>
-        <div class="form-group form-row">
-            <label>Output Type:
+        <!-- Output plots and download links -->
+        {% if plot_type == 'static' %}
+            {% if img_url %}
+                <div class="output">
+                    <h4>Membrane Potential Plot (Static)</h4>
+                    <img src="{{ img_url }}" alt="Membrane Potential Plot">
+                </div>
+            {% endif %}
+            {% if raster_url %}
+                <div class="output">
+                    <h4>Spike Raster Plot (Static)</h4>
+                    <img src="{{ raster_url }}" alt="Spike Raster Plot">
+                </div>
+            {% endif %}
+        {% else %}
+            {% if plotly_voltage_html %}
+                <div class="output">
+                    <h4>Membrane Potential Plot (Interactive)</h4>
+                    {{ plotly_voltage_html|safe }}
+                </div>
+            {% endif %}
+            {% if plotly_raster_html %}
+                <div class="output">
+                    <h4>Spike Raster Plot (Interactive)</h4>
+                    {{ plotly_raster_html|safe }}
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if data_url or json_url %}
+        <div class="downloads">
+            <h4>Download Simulation Data:</h4>
+            {% if data_url %}
+            <a href="{{ data_url }}" download>CSV</a>
+            {% endif %}
+            {% if json_url %}
+            <a href="{{ json_url }}" download>JSON</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if sim_time_seconds %}
+        <div class="info-label">
+            <strong>Simulation runtime:</strong> {{ "%.3f"|format(sim_time_seconds) }} seconds
+        </div>
+        {% endif %}
+
+        <!-- Spinner shown while simulation runs -->
+        <div id="spinner" style="display:none;" aria-live="polite">
+            <span>Running simulation, please wait...</span>
+        </div>
+
+        <!-- Output Options and Buttons BELOW the results -->
+        <form method="POST" action="/simulate" id="simFormOutput" autocomplete="off" style="margin-top:1.5em;">
+            <div class="section-title">6. Output Options</div>
+            <div class="form-group form-row">
+                <label for="output_type">Output Type:</label>
                 <select name="output_type" id="output_type">
                     <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both</option>
                     <option value="voltage" {% if output_type == 'voltage' %}selected{% endif %}>Voltage Only</option>
                     <option value="raster" {% if output_type == 'raster' %}selected{% endif %}>Raster Only</option>
                 </select>
-            </label>
-            <span class="tooltip" title="Choose which plots to display: membrane voltage, spike raster, or both.">?</span>
-        </div>
-        <div class="form-group form-row">
-            <label for="plot_type">Plot Type:</label>
-            <select name="plot_type" id="plot_type">
-                <option value="interactive" {% if plot_type != 'static' %}selected{% endif %}>Interactive (Plotly)</option>
-                <option value="static" {% if plot_type == 'static' %}selected{% endif %}>Static (Matplotlib)</option>
-            </select>
-            <span class="tooltip" title="Choose between interactive (Plotly) or static (Matplotlib) plots.">?</span>
-        </div>
-
-        <!-- 8. Run/submit buttons -->
-        <div class="form-group form-row">
-            <button type="submit">Run Simulation</button>
-            <button type="button" onclick="resetDefaults()">Reset</button>
-        </div>
-    </form>
-
-    <!-- Spinner shown while simulation runs -->
-    <div id="spinner" style="display:none;" aria-live="polite">
-        <span>Running simulation, please wait...</span>
-    </div>
-
-    <!-- Output plots and download links -->
-    {% if plot_type == 'static' %}
-        {% if img_url %}
-            <div class="output">
-                <h4>Membrane Potential Plot (Static)</h4>
-                <img src="{{ img_url }}" alt="Membrane Potential Plot">
+                <span class="tooltip" title="Choose which plots to display: membrane voltage, spike raster, or both.">?</span>
             </div>
-        {% endif %}
-        {% if raster_url %}
-            <div class="output">
-                <h4>Spike Raster Plot (Static)</h4>
-                <img src="{{ raster_url }}" alt="Spike Raster Plot">
+            <div class="form-group form-row">
+                <label for="plot_type">Plot Type:</label>
+                <select name="plot_type" id="plot_type">
+                    <option value="interactive" {% if plot_type != 'static' %}selected{% endif %}>Interactive (Plotly)</option>
+                    <option value="static" {% if plot_type == 'static' %}selected{% endif %}>Static (Matplotlib)</option>
+                </select>
+                <span class="tooltip" title="Choose between interactive (Plotly) or static (Matplotlib) plots. Interactive plots allow zooming and panning.">?</span>
             </div>
-        {% endif %}
-    {% else %}
-        {% if plotly_voltage_html %}
-            <div class="output">
-                <h4>Membrane Potential Plot (Interactive)</h4>
-                {{ plotly_voltage_html|safe }}
+            <div class="form-group button-group">
+                <button type="submit">Run Simulation</button>
+                <button type="button" onclick="resetDefaults()">Reset to Defaults</button>
             </div>
-        {% endif %}
-        {% if plotly_raster_html %}
-            <div class="output">
-                <h4>Spike Raster Plot (Interactive)</h4>
-                {{ plotly_raster_html|safe }}
-            </div>
-        {% endif %}
-    {% endif %}
-
-    {% if data_url or json_url %}
-    <div class="downloads">
-        <h4>Download Simulation Data:</h4>
-        {% if data_url %}
-        <a href="{{ data_url }}" download>CSV</a>
-        {% endif %}
-        {% if json_url %}
-        <a href="{{ json_url }}" download>JSON</a>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    {% if sim_time_seconds %}
-    <div class="info-label">
-        <strong>Simulation runtime:</strong> {{ "%.3f"|format(sim_time_seconds) }} seconds
-    </div>
-    {% endif %}
-</div>
+        </form>
+    </div> <!-- End output-panel -->
+</div> <!-- End main-flex -->
 
 <script>
 // Move all DOM access inside window.onload to avoid null errors
 window.onload = function() {
     // Spinner on submit
     document.getElementById('simForm').onsubmit = function() {
-        document.getElementById('spinner').style.display = 'block';
+        document.getElementById('spinner').style.display = 'flex'; // Use flex for centering
+        document.getElementById('output-placeholder').style.display = 'none'; // Hide placeholder
     };
 
     // Initial UI state
@@ -321,12 +315,24 @@ window.onload = function() {
         if (saved) {
             try {
                 setFields(JSON.parse(saved));
-            } catch (e) {}
+                // Re-apply UI state based on loaded settings
+                showModelFields(document.getElementById('neuron_model').value);
+                toggleNoiseOptions();
+                toggleSynapseOptions();
+            } catch (e) {
+                console.error("Error loading saved settings:", e);
+                localStorage.removeItem('brian2sim-settings'); // Clear invalid data
+            }
         }
         // Save on change
         document.getElementById('simForm').addEventListener('change', function() {
             localStorage.setItem('brian2sim-settings', JSON.stringify(getFields()));
         });
+    }
+
+    // Hide placeholder if results are already present on load
+    if (document.querySelector('.output img, .output .plotly-graph-div')) {
+        document.getElementById('output-placeholder').style.display = 'none';
     }
 };
 
@@ -344,7 +350,12 @@ const defaults = {
     synapse: true,
     syn_weight: 0.2,
     syn_prob: 0.2,
-    output_type: "both"
+    output_type: "both",
+    plot_type: "interactive", // Add plot_type to defaults
+    neuron_model: "lif", // Add neuron_model to defaults
+    izh_a: 0.02, izh_b: 0.2, izh_c: -65, izh_d: 2, // Add model params
+    adex_a: 0.02, adex_b: 0.2, adex_deltaT: 2, adex_tau_w: 30,
+    custom_eqs: "", custom_threshold: "", custom_reset: ""
 };
 
 const presetDescriptions = {
@@ -360,108 +371,131 @@ const presetDescriptions = {
 };
 
 function applyPreset(preset) {
+    let presetValues = {};
     if (preset === "lif_quickstart") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.2, num_neurons: 5,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.2, num_neurons: 5,
             current_start: 0, current_duration: 100, noise: true, noise_intensity: 0.2,
             noise_method: "additive", synapse: true, syn_weight: 0.2, syn_prob: 0.2, output_type: "both"
-        });
+        };
     } else if (preset === "balanced_random") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.0, num_neurons: 20,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.0, num_neurons: 20,
             current_start: 0, current_duration: 200, noise: true, noise_intensity: 0.4,
             noise_method: "additive", synapse: true, syn_weight: 0.3, syn_prob: 0.1, output_type: "both"
-        });
+        };
     } else if (preset === "strongly_coupled") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 300, input_current: 1.5, num_neurons: 50,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 300, input_current: 1.5, num_neurons: 50,
             current_start: 0, current_duration: 300, noise: true, noise_intensity: 0.5,
             noise_method: "multiplicative", synapse: true, syn_weight: 0.8, syn_prob: 0.5, output_type: "both"
-        });
+        };
     } else if (preset === "sparse_excitatory") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 150, input_current: 1.1, num_neurons: 10,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 150, input_current: 1.1, num_neurons: 10,
             current_start: 0, current_duration: 150, noise: true, noise_intensity: 0.15,
             noise_method: "additive", synapse: true, syn_weight: 0.1, syn_prob: 0.05, output_type: "both"
-        });
+        };
     } else if (preset === "inhibition_dominated") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.3, num_neurons: 20,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.3, num_neurons: 20,
             current_start: 0, current_duration: 200, noise: true, noise_intensity: 0.25,
             noise_method: "additive", synapse: true, syn_weight: -0.5, syn_prob: 0.2, output_type: "both"
-        });
+        };
     } else if (preset === "noisy_single") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.0, num_neurons: 1,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.0, num_neurons: 1,
             current_start: 0, current_duration: 100, noise: true, noise_intensity: 0.5,
             noise_method: "additive", synapse: false, syn_weight: 0.0, syn_prob: 0.0, output_type: "both"
-        });
+        };
     } else if (preset === "synchronous_bursting") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 120, input_current: 1.4, num_neurons: 15,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 120, input_current: 1.4, num_neurons: 15,
             current_start: 0, current_duration: 120, noise: true, noise_intensity: 0.1,
             noise_method: "additive", synapse: true, syn_weight: 1.0, syn_prob: 0.8, output_type: "both"
-        });
+        };
     } else if (preset === "minimal") {
-        setFields({
-            threshold: 1.0, reset: 0.0, sim_time: 50, input_current: 1.0, num_neurons: 2,
+        presetValues = {
+            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 50, input_current: 1.0, num_neurons: 2,
             current_start: 0, current_duration: 50, noise: false, noise_intensity: 0.0,
             noise_method: "additive", synapse: true, syn_weight: 0.05, syn_prob: 1.0, output_type: "both"
-        });
+        };
     }
+    // Merge preset values with defaults to ensure all fields are covered
+    setFields({...defaults, ...presetValues});
     document.getElementById('preset-desc').innerText = presetDescriptions[preset] || presetDescriptions['custom'];
+    // Update UI based on new values
+    showModelFields(document.getElementById('neuron_model').value);
     toggleNoiseOptions();
     toggleSynapseOptions();
 }
 
 function setFields(values) {
-    document.querySelector('[name="threshold"]').value = values.threshold;
-    document.querySelector('[name="reset"]').value = values.reset;
-    document.querySelector('[name="sim_time"]').value = values.sim_time;
-    document.querySelector('[name="input_current"]').value = values.input_current;
-    document.querySelector('[name="num_neurons"]').value = values.num_neurons;
-    document.querySelector('[name="current_start"]').value = values.current_start;
-    document.querySelector('[name="current_duration"]').value = values.current_duration;
-    document.getElementById('noise').checked = values.noise;
-    document.getElementById('noise_intensity').value = values.noise_intensity;
-    document.getElementById('noise_method').value = values.noise_method;
-    document.getElementById('synapse').checked = values.synapse;
-    document.getElementById('syn_weight').value = values.syn_weight;
-    document.getElementById('syn_prob').value = values.syn_prob;
-    document.getElementById('output_type').value = values.output_type;
+    // Helper to set value if element exists
+    const setValue = (name, value) => {
+        const el = document.querySelector(`[name="${name}"]`);
+        if (el) {
+            if (el.type === 'checkbox') el.checked = value;
+            else el.value = value;
+        }
+    };
+
+    // Set all fields from the values object
+    Object.keys(values).forEach(key => setValue(key, values[key]));
 }
 
 function getFields() {
-    return {
-        threshold: parseFloat(document.querySelector('[name="threshold"]').value),
-        reset: parseFloat(document.querySelector('[name="reset"]').value),
-        sim_time: parseInt(document.querySelector('[name="sim_time"]').value),
-        input_current: parseFloat(document.querySelector('[name="input_current"]').value),
-        num_neurons: parseInt(document.querySelector('[name="num_neurons"]').value),
-        current_start: parseInt(document.querySelector('[name="current_start"]').value),
-        current_duration: parseInt(document.querySelector('[name="current_duration"]').value),
-        noise: document.getElementById('noise').checked,
-        noise_intensity: parseFloat(document.getElementById('noise_intensity').value),
-        noise_method: document.getElementById('noise_method').value,
-        synapse: document.getElementById('synapse').checked,
-        syn_weight: parseFloat(document.getElementById('syn_weight').value),
-        syn_prob: parseFloat(document.getElementById('syn_prob').value),
-        output_type: document.getElementById('output_type').value
-    };
+    const formData = new FormData(document.getElementById('simForm'));
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        const el = document.querySelector(`[name="${key}"]`);
+        if (el && el.type === 'number') {
+            data[key] = parseFloat(value);
+        } else if (el && el.type === 'checkbox') {
+            // Checkboxes need special handling if unchecked
+            data[key] = el.checked;
+        } else {
+            data[key] = value;
+        }
+    }
+    // Ensure checkboxes that might be missing are included as false
+    if (!data.noise) data.noise = false;
+    if (!data.synapse) data.synapse = false;
+
+    // Add model params not in form directly
+    data.izh_a = parseFloat(document.querySelector('[name="izh_a"]').value);
+    data.izh_b = parseFloat(document.querySelector('[name="izh_b"]').value);
+    data.izh_c = parseFloat(document.querySelector('[name="izh_c"]').value);
+    data.izh_d = parseFloat(document.querySelector('[name="izh_d"]').value);
+    data.adex_a = parseFloat(document.querySelector('[name="adex_a"]').value);
+    data.adex_b = parseFloat(document.querySelector('[name="adex_b"]').value);
+    data.adex_deltaT = parseFloat(document.querySelector('[name="adex_deltaT"]').value);
+    data.adex_tau_w = parseFloat(document.querySelector('[name="adex_tau_w"]').value);
+    data.custom_eqs = document.querySelector('[name="custom_eqs"]').value;
+    data.custom_threshold = document.querySelector('[name="custom_threshold"]').value;
+    data.custom_reset = document.querySelector('[name="custom_reset"]').value;
+    data.neuron_model = document.getElementById('neuron_model').value; // Add neuron model
+
+    return data;
 }
 
 function resetDefaults() {
     setFields(defaults);
     document.getElementById('preset').value = "custom";
     document.getElementById('preset-desc').innerText = presetDescriptions['custom'];
+    // Update UI based on defaults
+    showModelFields(defaults.neuron_model);
     toggleNoiseOptions();
     toggleSynapseOptions();
+    // Clear local storage
+    if (window.localStorage) {
+        localStorage.removeItem('brian2sim-settings');
+    }
 }
 
 function toggleNoiseOptions() {
     const noiseBox = document.getElementById('noise');
     const noiseOptions = document.getElementById('noise-options');
-    // 4. Disable hidden fields
     noiseOptions.style.display = noiseBox.checked ? 'block' : 'none';
     Array.from(noiseOptions.querySelectorAll('input,select')).forEach(el => {
         el.disabled = !noiseBox.checked;
@@ -471,7 +505,6 @@ function toggleNoiseOptions() {
 function toggleSynapseOptions() {
     const synBox = document.getElementById('synapse');
     const synOptions = document.getElementById('synapse-options');
-    // 4. Disable hidden fields
     synOptions.style.display = synBox.checked ? 'block' : 'none';
     Array.from(synOptions.querySelectorAll('input,select')).forEach(el => {
         el.disabled = !synBox.checked;
@@ -479,7 +512,6 @@ function toggleSynapseOptions() {
 }
 
 function showModelFields(model) {
-    // 4. Disable hidden fields for model-specific params
     const izhFields = document.getElementById('izhikevich-fields');
     const adexFields = document.getElementById('adex-fields');
     const customFields = document.getElementById('custom-fields');
@@ -500,7 +532,7 @@ function showModelFields(model) {
         resetInput.disabled = false;
         help.textContent = "Used for LIF only.";
     } else {
-        thresholdReset.style.display = 'block';
+        thresholdReset.style.display = 'block'; // Keep visible but disabled
         thresholdInput.disabled = true;
         resetInput.disabled = true;
         help.textContent = "Ignored for this model.";
@@ -519,17 +551,23 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('simForm').addEventListener('submit', function(e) {
         let valid = true;
         let msg = [];
-        if (parseInt(document.querySelector('[name="num_neurons"]').value) < 1) {
+        const numNeurons = parseInt(document.querySelector('[name="num_neurons"]').value);
+        const simTime = parseFloat(document.querySelector('[name="sim_time"]').value);
+
+        if (isNaN(numNeurons) || numNeurons < 1) {
             valid = false;
             msg.push("Number of neurons must be at least 1.");
         }
-        if (parseFloat(document.querySelector('[name="sim_time"]').value) <= 0) {
+        if (isNaN(simTime) || simTime <= 0) {
             valid = false;
-            msg.push("Simulation time must be positive.");
+            msg.push("Simulation time must be a positive number.");
         }
+        // Add more validation as needed
+
         if (!valid) {
             e.preventDefault();
-            alert(msg.join('\n'));
+            alert("Please fix the following errors:\n- " + msg.join('\n- '));
+            document.getElementById('spinner').style.display = 'none'; // Hide spinner if validation fails
         }
     });
 });
@@ -539,6 +577,9 @@ document.addEventListener('keydown', function(e) {
     if (e.key === "Tab") {
         document.body.classList.add('user-is-tabbing');
     }
+});
+document.addEventListener('mousedown', function() {
+    document.body.classList.remove('user-is-tabbing');
 });
 </script>
 </body>
