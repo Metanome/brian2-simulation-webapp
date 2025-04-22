@@ -60,7 +60,6 @@ Users can configure neuron and network parameters, run simulations, visualize re
 - Progress bar or loading indicator for long simulations.
 - More neuron models and network presets.
 - Improved error handling and user feedback.
-- Option to export plots as SVG or PDF.
 - **Interactive Visualizations with Plotly**: Add interactive, dynamic plots for a more engaging user experience.
 - **Live Plot Option**: Implement real-time updates of the plots using JavaScript refresh techniques.
 
