@@ -72,6 +72,20 @@ def simulate():
     cleanup_static_folder()
     # === Get form inputs with defaults ===
     try:
+        neuron_model = request.form.get('neuron_model', 'lif')
+        # Model-specific params
+        izh_a = float(request.form.get('izh_a', 0.02))
+        izh_b = float(request.form.get('izh_b', 0.2))
+        izh_c = float(request.form.get('izh_c', -65))
+        izh_d = float(request.form.get('izh_d', 2))
+        adex_a = float(request.form.get('adex_a', 0.02))
+        adex_b = float(request.form.get('adex_b', 0.2))
+        adex_deltaT = float(request.form.get('adex_deltaT', 2))
+        adex_tau_w = float(request.form.get('adex_tau_w', 30))
+        custom_eqs = request.form.get('custom_eqs', '')
+        custom_threshold = request.form.get('custom_threshold', '')
+        custom_reset = request.form.get('custom_reset', '')
+
         threshold = float(request.form.get('threshold', 1.0))
         reset = float(request.form.get('reset', 0.0))
         sim_time = float(request.form.get('sim_time', 100))
@@ -93,6 +107,10 @@ def simulate():
 
     # === Validate inputs ===
     errors = validate_inputs(threshold, reset, sim_time, input_current, num_neurons, current_start, current_duration)
+    # Model-specific validation
+    if neuron_model == 'custom':
+        if not custom_eqs.strip() or not custom_threshold.strip() or not custom_reset.strip():
+            errors.append("Custom model: equations, threshold, and reset are required.")
     if errors:
         for err in errors:
             flash(err)
@@ -102,7 +120,7 @@ def simulate():
                                current_start=current_start, current_duration=current_duration,
                                noise=noise_enabled, noise_intensity=noise_intensity, noise_method=noise_method,
                                synapse=synapse_enabled, syn_weight=syn_weight, syn_prob=syn_prob,
-                               output_type=output_type)
+                               output_type=output_type, plot_type=plot_type)
 
     # === Unique filenames for this simulation ===
     unique_id = str(uuid.uuid4())
@@ -119,15 +137,66 @@ def simulate():
     try:
         start_time = time.time()
         start_scope()
-        # Define neuron model equations
-        eqs = '''
-        dv/dt = (I - v) / (10*ms) : 1
-        I : 1
-        '''
-        # Create neuron group
-        G = NeuronGroup(num_neurons, eqs, threshold='v > {}'.format(threshold), reset='v = {}'.format(reset), method='euler')
-        G.v = 0
-        G.I = 0
+        # --- Model selection ---
+        if neuron_model == 'lif':
+            eqs = '''
+            dv/dt = (I - v) / (10*ms) : 1
+            I : 1
+            '''
+            threshold_expr = f'v > {threshold}'
+            reset_expr = f'v = {reset}'
+        elif neuron_model == 'izhikevich':
+            eqs = '''
+            dv/dt = (0.04*v**2 + 5*v + 140 - u + I)/ms : 1
+            du/dt = {a}*( {b}*v - u )/ms : 1
+            I : 1
+            '''.format(a=izh_a, b=izh_b)
+            threshold_expr = 'v >= 30'
+            reset_expr = f'v = {izh_c}; u += {izh_d}'
+        elif neuron_model == 'adex':
+            eqs = '''
+            dv/dt = ( -gL*(v-EL) + gL*deltaT*exp((v-VT)/deltaT) - w + I ) / C : volt
+            dw/dt = ( a*(v-EL) - w ) / tau_w : amp
+            I : amp
+            gL : siemens
+            EL : volt
+            deltaT : volt
+            VT : volt
+            a : siemens
+            tau_w : second
+            C : farad
+            '''
+            threshold_expr = 'v > VT'
+            reset_expr = f'v = EL; w += {adex_b}*pA'
+            G = NeuronGroup(num_neurons, eqs, threshold=threshold_expr, reset=reset_expr, method='euler')
+            G.v = -65*mV
+            G.w = 0*pA
+            G.I = input_current * pA
+            G.gL = 10*nS
+            G.EL = -65*mV
+            G.deltaT = adex_deltaT * mV
+            G.VT = -50*mV
+            G.a = adex_a * nS
+            G.tau_w = adex_tau_w * ms
+            G.C = 200*pF
+        elif neuron_model == 'custom':
+            eqs = custom_eqs
+            threshold_expr = custom_threshold
+            reset_expr = custom_reset
+        else:
+            flash("Unknown neuron model selected.")
+            return render_template('index.html')
+
+        # --- Create neuron group ---
+        if neuron_model != 'adex':
+            G = NeuronGroup(num_neurons, eqs, threshold=threshold_expr, reset=reset_expr, method='euler')
+            if 'v' in G.namespace:
+                G.v = 0
+            if 'u' in G.namespace:
+                G.u = 0
+            if 'w' in G.namespace:
+                G.w = 0
+            G.I = 0
 
         # Time array for current injection
         dt = float(defaultclock.dt/ms)
@@ -151,13 +220,21 @@ def simulate():
                 I_array *= (1 + noise)
 
         # Create a TimedArray for time-varying input
-        I_timed = TimedArray(I_array.T, dt=defaultclock.dt)
-        G.run_regularly('I = I_timed(t, i)', dt=defaultclock.dt)
+        if neuron_model == 'adex':
+            I_timed = TimedArray(I_array.T * pA, dt=defaultclock.dt)
+            G.run_regularly('I = I_timed(t, i)', dt=defaultclock.dt)
+        else:
+            I_timed = TimedArray(I_array.T, dt=defaultclock.dt)
+            G.run_regularly('I = I_timed(t, i)', dt=defaultclock.dt)
 
         # Add synapses if enabled
         if synapse_enabled and num_neurons > 1:
-            # Add synaptic delay for realism and visible effect
-            S = Synapses(G, G, on_pre='v_post += {}'.format(syn_weight), delay=1*ms)
+            if neuron_model == 'adex':
+                syn_weight_str = f'{syn_weight}*pA'
+                S = Synapses(G, G, on_pre=f'I_post += {syn_weight_str}', delay=1*ms)
+            else:
+                syn_weight_str = f'{syn_weight}'
+                S = Synapses(G, G, on_pre=f'v_post += {syn_weight_str}', delay=1*ms)
             S.connect(p=syn_prob)
 
         # Set up monitors to record data
@@ -257,9 +334,17 @@ def simulate():
     data_url = f'/static/{csv_filename}'
 
     # JSON Export: Save data in JSON format
+    neurons_json = {}
+    for i in range(num_neurons):
+        v = M.v[i]
+        # Convert each value to float in mV, regardless of type
+        v_data = [float(val / mV) if hasattr(val, 'unit') else float(val) for val in v]
+        neurons_json[f'Neuron_{i}'] = v_data
+
     json_data = {
         'time_ms': (M.t/ms).tolist(),
-        'neurons': {f'Neuron_{i}': M.v[i].tolist() for i in range(num_neurons)}
+        'neurons': neurons_json,
+        'unit': 'mV'
     }
     json_path = os.path.join(STATIC_FOLDER, json_filename)
     with open(json_path, 'w') as jf:
