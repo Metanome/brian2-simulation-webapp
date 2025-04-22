@@ -1,73 +1,92 @@
-# Brian2 Simulation Web App
+# Brian2 Web Simulation App
 
-This web application allows users to interact with and run Brian2 neural simulations through a simple, intuitive GUI. Users can configure simulation parameters, visualize membrane potential and spike raster plots, and download simulation data in CSV and JSON formats.
+A web-based interactive simulator for spiking neural networks using [Brian2](https://brian2.readthedocs.io/) and Flask.  
+Users can configure neuron and network parameters, run simulations, visualize results, and download data.
+
+---
 
 ## Features
 
-- **Customizable Simulation Parameters**: Adjust threshold, reset potential, simulation time, input current, and more.
-- **Neuron Configuration**: Set the number of neurons and configure current injection timing.
-- **Noise Options**: Add noise with either additive or multiplicative methods.
-- **Synaptic Interactions**: Enable synapses with customizable synaptic weight and connection probability.
-- **Plot Outputs**: Visualize membrane potential over time and spike raster plots.
-- **Download Data**: Export simulation data in CSV and JSON formats.
+- **Leaky Integrate-and-Fire (LIF) Neuron Simulation:**  
+  Simulate customizable networks of LIF neurons with adjustable parameters.
+- **Interactive Web Interface:**  
+  User-friendly form for setting thresholds, reset values, simulation time, input current, noise, synaptic weights, and more.
+- **Presets:**  
+  Quickly load common network configurations for demonstration or exploration.
+- **Visualization:**  
+  - Membrane potential plots for each neuron  
+  - Spike raster plots for network activity
+- **Data Export:**  
+  Download simulation results as CSV or JSON for further analysis.
+- **Automatic Cleanup:**  
+  Old output files are automatically deleted to save disk space.
 
-## Technologies Used
-
-- **Flask**: Backend framework for handling requests and rendering templates.
-- **Brian2**: The neural simulation engine for modeling spiking neural networks.
-- **Matplotlib**: For plotting membrane potential and spike raster graphs.
-- **Pandas**: For handling and exporting simulation data in CSV format.
-- **HTML/CSS/JavaScript**: For the frontend interface and dynamic interactions.
-
-## Installation
-
-To run the project locally, follow these steps:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/metanome/brian2-simulation-webapp.git
-   cd brian2-simulation-webapp
-   ```
-
-2. Create a virtual environment:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Run the app:
-   ```bash
-   python app.py
-   ```
-
-5. Open your browser and navigate to:
-   ```
-   http://127.0.0.1:5000/
-   ```
+---
 
 ## Usage
 
-1. **Preset Selection**: Choose a preset for quick configuration or manually input the parameters.
-2. **Simulation Parameters**: Customize the simulation by adjusting parameters like threshold, reset potential, simulation time, and input current.
-3. **Noise Settings**: Optionally add noise with adjustable intensity and method (additive or multiplicative).
-4. **Synaptic Interactions**: Enable synapses and set their weight and connection probability.
-5. **Run Simulation**: After configuring the simulation, click the "Run Simulation" button to generate the plots and download data.
-6. **View and Download Results**: Once the simulation is complete, you can view the generated plots and download the data in CSV or JSON format.
+1. **Install dependencies:**
+
+    ```bash
+    pip install flask brian2 matplotlib pandas numpy
+    ```
+
+2. **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/yourusername/briansim-web.git
+    cd briansim-web
+    ```
+
+3. **Run the app:**
+
+    ```bash
+    python app.py
+    ```
+
+4. **Open your browser:**  
+   Go to [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+
+5. **Configure and run simulations:**  
+   - Adjust parameters or select a preset.
+   - Click "Run Simulation" to see plots and download data.
+
+---
 
 ## Known Issues
 
-- **Performance Drop with Large Simulations**: Increasing neuron count or simulation time may lead to slower performance.
+- Large simulations (many neurons or long durations) may take significant time to run and could cause the web interface to become unresponsive.
+- No progress bar or feedback for long-running simulations.
+- No persistent storage: all output files are deleted after 10 minutes.
+- Error messages may be generic for some simulation failures.
+
+---
 
 ## Future Features
 
+- Asynchronous/background simulation execution for better responsiveness.
+- Progress bar or loading indicator for long simulations.
+- More neuron models and network presets.
+- Improved error handling and user feedback.
+- Option to export plots as SVG or PDF.
 - **Interactive Visualizations with Plotly**: Add interactive, dynamic plots for a more engaging user experience.
 - **Live Plot Option**: Implement real-time updates of the plots using JavaScript refresh techniques.
 
+---
+
 ## License
 
-This project is licensed under the GPT 3.0 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0.
+
+See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.
+
+---
+
+## Acknowledgments
+
+- [Brian2](https://brian2.readthedocs.io/) for the simulation engine
+- [Flask](https://flask.palletsprojects.com/) for the web framework
+
+---
+
+*Created by @Metanome*
