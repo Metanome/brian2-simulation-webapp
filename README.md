@@ -24,7 +24,7 @@ Users can configure neuron and network parameters, run simulations, visualize re
 1. **Install dependencies:**
 
     ```bash
-    pip install flask brian2 matplotlib pandas numpy
+    pip install flask brian2 matplotlib pandas numpy plotly
     ```
 
 2. **Clone the repository:**
@@ -56,11 +56,9 @@ Users can configure neuron and network parameters, run simulations, visualize re
 
 ## Future Features
 
-- Asynchronous/background simulation execution for better responsiveness.
 - Progress bar or loading indicator for long simulations.
 - More neuron models and network presets.
 - Improved error handling and user feedback.
-- **Interactive Visualizations with Plotly**: Add interactive, dynamic plots for a more engaging user experience.
 - **Live Plot Option**: Implement real-time updates of the plots using JavaScript refresh techniques.
 
 ## License
