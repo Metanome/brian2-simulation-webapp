@@ -30,7 +30,7 @@ Users can configure neuron and network parameters, run simulations, visualize re
 2. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/yourusername/briansim-web.git
+    git clone https://github.com/Metanome/briansim-web.git
     cd briansim-web
     ```
 
