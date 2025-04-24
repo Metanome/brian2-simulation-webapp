@@ -3,7 +3,8 @@
 A web-based interactive simulator for spiking neural networks using [Brian2](https://brian2.readthedocs.io/) and Flask.  
 Users can configure neuron and network parameters, run simulations, visualize results, and download data.
 
-**Goal:** The main goal of this project is to make neural modeling and simulation with Brian2 accessible and user-friendly, lowering the barrier for learning, teaching, and rapid prototyping in neuroscience.
+## Goal
+The main goal of this project is to make neural modeling and simulation with Brian2 accessible and user-friendly, lowering the barrier for learning, teaching, and rapid prototyping in neuroscience.
 
 ## Features
 
