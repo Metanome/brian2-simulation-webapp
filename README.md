@@ -3,6 +3,8 @@
 A web-based interactive simulator for spiking neural networks using [Brian2](https://brian2.readthedocs.io/) and Flask.  
 Users can configure neuron and network parameters, run simulations, visualize results, and download data.
 
+**Goal:** The main goal of this project is to make neural modeling and simulation with Brian2 accessible and user-friendly, lowering the barrier for learning, teaching, and rapid prototyping in neuroscience.
+
 ## Features
 
 - **Multiple neuron models:** LIF, Izhikevich, AdEx, and custom equations.
@@ -51,6 +53,11 @@ Users can configure neuron and network parameters, run simulations, visualize re
    - Adjust parameters or select a preset in the left panel.
    - Click "Run Simulation" to see plots and download data.
    - Use output options below the results to change plot type or output.
+
+## Demo Screenshots
+![Screenshot1](https://github.com/user-attachments/assets/e7729d8d-6ca5-44c1-abef-70f7b3cf7b17)
+![Screenshot2](https://github.com/user-attachments/assets/44af23f9-4713-40e0-a12b-628e64dfda7d)
+
 
 ## File Structure
 
