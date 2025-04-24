@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Brian2 Simulation</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<div class="main-flex">
+<form method="POST" action="/simulate" id="simForm" autocomplete="off">
+  <div class="main-flex">
     <div class="container options-panel">
         <h1>🧠 Brian2 Simulation</h1>
 
@@ -87,7 +88,6 @@
         </small>
 
         <div class="section-title">3. Simulation Parameters</div>
-        <form method="POST" action="/simulate" id="simForm" autocomplete="off">
             <div id="threshold-reset-fields" class="form-group">
                 <div class="form-row">
                     <label for="threshold">Threshold (mV):</label>
@@ -177,8 +177,7 @@
                     <span class="tooltip" title="Probability (0 to 1) that any two neurons are connected by a synapse.">?</span>
                 </div>
             </div>
-        </form>
-    </div> <!-- End options-panel -->
+        </div> <!-- End options-panel -->
 
     <div class="container output-panel">
         <div class="output-placeholder" id="output-placeholder">
@@ -232,38 +231,36 @@
         </div>
         {% endif %}
 
+        <div class="section-title">6. Output Options</div>
+        <div class="form-group form-row">
+            <label for="output_type">Output Type:</label>
+            <select name="output_type" id="output_type">
+                <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both</option>
+                <option value="voltage" {% if output_type == 'voltage' %}selected{% endif %}>Voltage Only</option>
+                <option value="raster" {% if output_type == 'raster' %}selected{% endif %}>Raster Only</option>
+            </select>
+            <span class="tooltip" title="Choose which plots to display: membrane voltage, spike raster, or both.">?</span>
+        </div>
+        <div class="form-group form-row">
+            <label for="plot_type">Plot Type:</label>
+            <select name="plot_type" id="plot_type">
+                <option value="interactive" {% if plot_type != 'static' %}selected{% endif %}>Interactive (Plotly)</option>
+                <option value="static" {% if plot_type == 'static' %}selected{% endif %}>Static (Matplotlib)</option>
+            </select>
+            <span class="tooltip" title="Choose between interactive (Plotly) or static (Matplotlib) plots. Interactive plots allow zooming and panning.">?</span>
+        </div>
+        <div class="form-group button-group">
+            <button type="submit">Run Simulation</button>
+            <button type="button" onclick="resetDefaults()">Reset to Defaults</button>
+        </div>
+
         <!-- Spinner shown while simulation runs -->
         <div id="spinner" style="display:none;" aria-live="polite">
             <span>Running simulation, please wait...</span>
         </div>
-
-        <!-- Output Options and Buttons BELOW the results -->
-        <form method="POST" action="/simulate" id="simFormOutput" autocomplete="off" style="margin-top:1.5em;">
-            <div class="section-title">6. Output Options</div>
-            <div class="form-group form-row">
-                <label for="output_type">Output Type:</label>
-                <select name="output_type" id="output_type">
-                    <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both</option>
-                    <option value="voltage" {% if output_type == 'voltage' %}selected{% endif %}>Voltage Only</option>
-                    <option value="raster" {% if output_type == 'raster' %}selected{% endif %}>Raster Only</option>
-                </select>
-                <span class="tooltip" title="Choose which plots to display: membrane voltage, spike raster, or both.">?</span>
-            </div>
-            <div class="form-group form-row">
-                <label for="plot_type">Plot Type:</label>
-                <select name="plot_type" id="plot_type">
-                    <option value="interactive" {% if plot_type != 'static' %}selected{% endif %}>Interactive (Plotly)</option>
-                    <option value="static" {% if plot_type == 'static' %}selected{% endif %}>Static (Matplotlib)</option>
-                </select>
-                <span class="tooltip" title="Choose between interactive (Plotly) or static (Matplotlib) plots. Interactive plots allow zooming and panning.">?</span>
-            </div>
-            <div class="form-group button-group">
-                <button type="submit">Run Simulation</button>
-                <button type="button" onclick="resetDefaults()">Reset to Defaults</button>
-            </div>
-        </form>
     </div> <!-- End output-panel -->
-</div> <!-- End main-flex -->
+  </div> <!-- End main-flex -->
+</form>
 
 <script>
 // Move all DOM access inside window.onload to avoid null errors

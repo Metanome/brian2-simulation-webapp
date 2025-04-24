@@ -17,8 +17,22 @@ import plotly.io as pio
 # Initialize Flask app and static folder for output files
 app = Flask(__name__)
 app.secret_key = 'd3c8e7f6b1a24e0c9f7a5b6c2e1d4f8a9b7c6e5d2f1a3b4c5d6e7f8a9b0c1d2e'  # Needed for flash messages
-STATIC_FOLDER = os.path.join(app.root_path, 'static')
-os.makedirs(STATIC_FOLDER, exist_ok=True)
+OUTPUT_FOLDER = os.path.join(app.root_path, 'output')
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+def cleanup_output_folder(output_folder, max_age_seconds=600):
+    """
+    Remove files older than max_age_seconds from the output folder to save disk space.
+    """
+    now = time.time()
+    for fname in os.listdir(output_folder):
+        fpath = os.path.join(output_folder, fname)
+        if os.path.isfile(fpath):
+            if now - os.path.getmtime(fpath) > max_age_seconds:
+                try:
+                    os.remove(fpath)
+                except Exception:
+                    pass
 
 def validate_inputs(threshold, reset, sim_time, input_current, num_neurons, current_start, current_duration):
     """
@@ -39,24 +53,6 @@ def validate_inputs(threshold, reset, sim_time, input_current, num_neurons, curr
         errors.append("Threshold should be greater than reset value.")
     return errors
 
-def cleanup_static_folder(max_age_seconds=600):
-    """
-    Remove files older than max_age_seconds from the static folder to save disk space.
-    Do NOT delete permanent static assets like style.css.
-    """
-    now = time.time()
-    permanent_files = {'style.css'}
-    for fname in os.listdir(STATIC_FOLDER):
-        if fname in permanent_files:
-            continue  # Skip permanent static files
-        fpath = os.path.join(STATIC_FOLDER, fname)
-        if os.path.isfile(fpath):
-            if now - os.path.getmtime(fpath) > max_age_seconds:
-                try:
-                    os.remove(fpath)
-                except Exception:
-                    pass
-
 @app.route('/', methods=['GET'])
 def index():
     """
@@ -69,7 +65,7 @@ def simulate():
     """
     Handle simulation requests: validate input, run Brian2 simulation, generate plots and data files.
     """
-    cleanup_static_folder()
+    cleanup_output_folder(OUTPUT_FOLDER)
     # === Get form inputs with defaults ===
     try:
         neuron_model = request.form.get('neuron_model', 'lif')
@@ -275,9 +271,9 @@ def simulate():
             plt.title('Membrane Potential Over Time')
             plt.legend()
             plt.tight_layout()
-            img_path = os.path.join(STATIC_FOLDER, img_filename)
+            img_path = os.path.join(OUTPUT_FOLDER, img_filename)
             plt.savefig(img_path)
-            img_url = f'/static/{img_filename}'
+            img_url = f'/output/{img_filename}'
             plt.close()
 
         if output_type in ['raster', 'both']:
@@ -287,9 +283,9 @@ def simulate():
             plt.ylabel('Neuron index')
             plt.title('Spike Raster Plot')
             plt.tight_layout()
-            raster_path = os.path.join(STATIC_FOLDER, raster_filename)
+            raster_path = os.path.join(OUTPUT_FOLDER, raster_filename)
             plt.savefig(raster_path)
-            raster_url = f'/static/{raster_filename}'
+            raster_url = f'/output/{raster_filename}'
             plt.close()
 
     # Only generate interactive plots if requested (default)
@@ -341,9 +337,9 @@ def simulate():
     # CSV Export: Save membrane potential traces
     df = pd.DataFrame({f"Neuron_{i}": M.v[i] for i in range(num_neurons)})
     df.insert(0, "Time(ms)", M.t/ms)
-    csv_path = os.path.join(STATIC_FOLDER, csv_filename)
+    csv_path = os.path.join(OUTPUT_FOLDER, csv_filename)
     df.to_csv(csv_path, index=False)
-    data_url = f'/static/{csv_filename}'
+    data_url = f'/output/{csv_filename}'
 
     # JSON Export: Save data in JSON format
     neurons_json = {}
@@ -358,10 +354,10 @@ def simulate():
         'neurons': neurons_json,
         'unit': 'mV'
     }
-    json_path = os.path.join(STATIC_FOLDER, json_filename)
+    json_path = os.path.join(OUTPUT_FOLDER, json_filename)
     with open(json_path, 'w') as jf:
         json.dump(json_data, jf)
-    json_url = f'/static/{json_filename}'
+    json_url = f'/output/{json_filename}'
 
     # Render the results page with plots and download links
     return render_template('index.html',
@@ -400,12 +396,12 @@ def simulate():
                            custom_threshold=custom_threshold,
                            custom_reset=custom_reset)
 
-@app.route('/static/<path:path>')
-def static_file(path):
+@app.route('/output/<path:path>')
+def output_file(path):
     """
-    Serve static files (plots, data) from the static folder.
+    Serve output files (plots, data) from the output folder.
     """
-    return send_from_directory(STATIC_FOLDER, path)
+    return send_from_directory(OUTPUT_FOLDER, path)
 
 if __name__ == '__main__':
     # Start the Flask development server
