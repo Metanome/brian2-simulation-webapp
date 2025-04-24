@@ -1,3 +1,8 @@
+<!--
+index.html - Main template for Brian2 Web Simulation
+This file contains the main HTML structure for the simulation UI, including the form, options panel, output panel, and result display.
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,24 +11,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<form method="POST" action="/simulate" id="simForm" autocomplete="off">
+<form method="POST" action="/" id="simForm" autocomplete="off">
   <div class="main-flex">
+    <!-- Options panel: user input for simulation parameters -->
     <div class="container options-panel">
-        <h1>🧠 Brian2 Simulation</h1>
+        <h1><a href="/">🧠 Brian2 Simulation</a></h1>
 
-        <!-- Show error messages -->
-        <div aria-live="polite">
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <ul class="error-message-list">
-              {% for message in messages %}
-                <li>{{ message }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
-        </div>
-
+        <!-- Neuron model selection -->
         <div class="section-title">1. Neuron Model</div>
         <div class="form-group form-row">
             <label for="neuron_model">Neuron Model:</label>
@@ -36,7 +30,7 @@
             <span class="tooltip" title="Select the mathematical model for neuron behavior.">?</span>
         </div>
 
-        <!-- 2. Model-specific parameter fields -->
+        <!-- Model-specific parameter fields (hidden unless selected) -->
         <div id="izhikevich-fields" class="form-group" style="display:none;">
             <div class="form-row"><label for="izh_a">a:</label> <input type="number" step="any" name="izh_a" id="izh_a" value="{{ izh_a or 0.02 }}"> <span class="tooltip" title="Recovery time constant (dimensionless)">?</span></div>
             <div class="form-row"><label for="izh_b">b:</label> <input type="number" step="any" name="izh_b" id="izh_b" value="{{ izh_b or 0.2 }}"> <span class="tooltip" title="Sensitivity to subthreshold fluctuations (dimensionless)">?</span></div>
@@ -67,19 +61,20 @@
             </div>
         </div>
 
+        <!-- Preset scenarios for quick parameter setup -->
         <div class="section-title">2. Presets</div>
         <div class="form-group form-row">
             <label for="preset">Presets:</label>
             <select id="preset" onchange="applyPreset(this.value)">
-                <option value="custom">Custom (edit freely)</option>
-                <option value="lif_quickstart">LIF Quickstart (classic small network)</option>
-                <option value="balanced_random">Balanced Random Network (medium, more neurons, more noise)</option>
-                <option value="strongly_coupled">Strongly Coupled Network (dense, strong synapses, multiplicative noise)</option>
-                <option value="sparse_excitatory">Sparse Excitatory Network (small, weak coupling, sparse)</option>
-                <option value="inhibition_dominated">Inhibition-Dominated Network (medium, strong inhibition)</option>
-                <option value="noisy_single">Noisy Single Neuron (single cell, high noise)</option>
-                <option value="synchronous_bursting">Synchronous Bursting (medium, high coupling, low noise)</option>
-                <option value="minimal">Minimal Network (2 neurons, no noise, weak synapses)</option>
+                <option value="custom">Custom</option>
+                <option value="lif_quickstart">LIF Quickstart</option>
+                <option value="balanced_random">Balanced Random Network</option>
+                <option value="strongly_coupled">Strongly Coupled Network</option>
+                <option value="sparse_excitatory">Sparse Excitatory Network</option>
+                <option value="inhibition_dominated">Inhibition-Dominated Network</option>
+                <option value="noisy_single">Noisy Single Neuron</option>
+                <option value="synchronous_bursting">Synchronous Bursting</option>
+                <option value="minimal">Minimal Network</option>
             </select>
             <span class="tooltip" title="Quickly set parameters for common scenarios. Overrides current settings.">?</span>
         </div>
@@ -87,6 +82,7 @@
             Set your own parameters or pick a preset to see a typical network scenario.
         </small>
 
+        <!-- Simulation parameters (time, current, neuron count, etc.) -->
         <div class="section-title">3. Simulation Parameters</div>
             <div id="threshold-reset-fields" class="form-group">
                 <div class="form-row">
@@ -137,6 +133,7 @@
                 <span class="tooltip" title="How long the current injection lasts (ms).">?</span>
             </div>
 
+            <!-- Noise options -->
             <div class="section-title">4. Noise Options</div>
             <div class="form-group form-row">
                 <label for="noise">Add Noise:</label>
@@ -159,6 +156,7 @@
                 </div>
             </div>
 
+            <!-- Synaptic interaction options -->
             <div class="section-title">5. Synaptic Interactions</div>
             <div class="form-group form-row">
                 <label for="synapse">Enable Synapses:</label>
@@ -179,12 +177,25 @@
             </div>
         </div> <!-- End options-panel -->
 
-    <div class="container output-panel">
-        <div class="output-placeholder" id="output-placeholder">
-            Simulation results will appear here.
-        </div>
+    <!-- Output panel: simulation results, plots, and download links -->
+    <div class="container output-panel" style="position:relative;">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div aria-live="polite">
+              <ul class="error-message-list">
+                {% for message in messages %}
+                  <li>{{ message }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% else %}
+            <div class="output-placeholder" id="output-placeholder">
+              Simulation results will appear here.
+            </div>
+          {% endif %}
+        {% endwith %}
 
-        <!-- Output plots and download links -->
+        <!-- Output plots and download links (static or interactive) -->
         {% if plot_type == 'static' %}
             {% if img_url %}
                 <div class="output">
@@ -202,13 +213,13 @@
             {% if plotly_voltage_html %}
                 <div class="output">
                     <h4>Membrane Potential Plot (Interactive)</h4>
-                    {{ plotly_voltage_html|safe }}
+                    <div>{{ plotly_voltage_html|safe }}</div>
                 </div>
             {% endif %}
             {% if plotly_raster_html %}
                 <div class="output">
                     <h4>Spike Raster Plot (Interactive)</h4>
-                    {{ plotly_raster_html|safe }}
+                    <div>{{ plotly_raster_html|safe }}</div>
                 </div>
             {% endif %}
         {% endif %}
@@ -231,6 +242,7 @@
         </div>
         {% endif %}
 
+        <!-- Output options (plot type, output type, run/reset buttons) -->
         <div class="section-title">6. Output Options</div>
         <div class="form-group form-row">
             <label for="output_type">Output Type:</label>
@@ -254,330 +266,13 @@
             <button type="button" onclick="resetDefaults()">Reset to Defaults</button>
         </div>
 
-        <!-- Spinner shown while simulation runs -->
-        <div id="spinner" style="display:none;" aria-live="polite">
+        <!-- Spinner overlay: covers output-panel during simulation -->
+        <div id="spinner" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:10; align-items:center; justify-content:center; pointer-events:none;" aria-live="polite">
             <span>Running simulation, please wait...</span>
         </div>
     </div> <!-- End output-panel -->
   </div> <!-- End main-flex -->
 </form>
-
-<script>
-// Move all DOM access inside window.onload to avoid null errors
-window.onload = function() {
-    // Spinner on submit
-    document.getElementById('simForm').onsubmit = function() {
-        document.getElementById('spinner').style.display = 'flex'; // Use flex for centering
-        document.getElementById('output-placeholder').style.display = 'none'; // Hide placeholder
-    };
-
-    // Initial UI state
-    var model = document.getElementById('neuron_model').value;
-    showModelFields(model);
-    toggleNoiseOptions();
-    toggleSynapseOptions();
-
-    // Fix: update preset-desc on load
-    document.getElementById('preset-desc').innerText = presetDescriptions[document.getElementById('preset').value] || presetDescriptions['custom'];
-
-    // Fix: update model fields on change
-    document.getElementById('neuron_model').addEventListener('change', function() {
-        showModelFields(this.value);
-    });
-    // Fix: update preset-desc on change
-    document.getElementById('preset').addEventListener('change', function() {
-        document.getElementById('preset-desc').innerText = presetDescriptions[this.value] || presetDescriptions['custom'];
-        // 6. Preset Model Sync: update neuron model if preset implies a model
-        const presetToModel = {
-            lif_quickstart: 'lif',
-            balanced_random: 'lif',
-            strongly_coupled: 'lif',
-            sparse_excitatory: 'lif',
-            inhibition_dominated: 'lif',
-            noisy_single: 'lif',
-            synchronous_bursting: 'lif',
-            minimal: 'lif'
-            // Add mapping if you have presets for other models
-        };
-        if (presetToModel[this.value]) {
-            document.getElementById('neuron_model').value = presetToModel[this.value];
-            showModelFields(presetToModel[this.value]);
-        }
-    });
-
-    // 12. Remember Last Used Settings
-    if (window.localStorage) {
-        // Restore last settings if available
-        const saved = localStorage.getItem('brian2sim-settings');
-        if (saved) {
-            try {
-                setFields(JSON.parse(saved));
-                // Re-apply UI state based on loaded settings
-                showModelFields(document.getElementById('neuron_model').value);
-                toggleNoiseOptions();
-                toggleSynapseOptions();
-            } catch (e) {
-                console.error("Error loading saved settings:", e);
-                localStorage.removeItem('brian2sim-settings'); // Clear invalid data
-            }
-        }
-        // Save on change
-        document.getElementById('simForm').addEventListener('change', function() {
-            localStorage.setItem('brian2sim-settings', JSON.stringify(getFields()));
-        });
-    }
-
-    // Hide placeholder if results are already present on load
-    if (document.querySelector('.output img, .output .plotly-graph-div')) {
-        document.getElementById('output-placeholder').style.display = 'none';
-    }
-};
-
-const defaults = {
-    threshold: 1.0,
-    reset: 0.0,
-    sim_time: 100,
-    input_current: 1.2,
-    num_neurons: 5,
-    current_start: 0,
-    current_duration: 100,
-    noise: true,
-    noise_intensity: 0.2,
-    noise_method: "additive",
-    synapse: true,
-    syn_weight: 0.2,
-    syn_prob: 0.2,
-    output_type: "both",
-    plot_type: "interactive", // Add plot_type to defaults
-    neuron_model: "lif", // Add neuron_model to defaults
-    izh_a: 0.02, izh_b: 0.2, izh_c: -65, izh_d: 2, // Add model params
-    adex_a: 0.02, adex_b: 0.2, adex_deltaT: 2, adex_tau_w: 30,
-    custom_eqs: "", custom_threshold: "", custom_reset: ""
-};
-
-const presetDescriptions = {
-    custom: "Set your own parameters or pick a preset to see a typical network scenario.",
-    lif_quickstart: "A classic Leaky Integrate-and-Fire (LIF) network with 5 neurons, moderate input, and sparse synapses. Great for quick demos.",
-    balanced_random: "A medium-sized network with 20 neurons, more noise, and sparse random connectivity. Useful for exploring asynchronous firing.",
-    strongly_coupled: "A large, densely connected network with strong synapses and multiplicative noise. Shows rich, collective dynamics.",
-    sparse_excitatory: "A small network with weak, sparse excitatory coupling and moderate noise. Good for observing isolated spikes.",
-    inhibition_dominated: "A medium network dominated by strong inhibitory synapses. Demonstrates suppression and competition.",
-    noisy_single: "A single neuron with high noise and no synapses. Useful for exploring stochastic firing and membrane fluctuations.",
-    synchronous_bursting: "A medium network with high synaptic weight and probability, low noise. Promotes synchronous bursts.",
-    minimal: "A minimal network of 2 neurons, no noise, weak synapses. Useful for debugging and basic connectivity tests."
-};
-
-function applyPreset(preset) {
-    let presetValues = {};
-    if (preset === "lif_quickstart") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.2, num_neurons: 5,
-            current_start: 0, current_duration: 100, noise: true, noise_intensity: 0.2,
-            noise_method: "additive", synapse: true, syn_weight: 0.2, syn_prob: 0.2, output_type: "both"
-        };
-    } else if (preset === "balanced_random") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.0, num_neurons: 20,
-            current_start: 0, current_duration: 200, noise: true, noise_intensity: 0.4,
-            noise_method: "additive", synapse: true, syn_weight: 0.3, syn_prob: 0.1, output_type: "both"
-        };
-    } else if (preset === "strongly_coupled") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 300, input_current: 1.5, num_neurons: 50,
-            current_start: 0, current_duration: 300, noise: true, noise_intensity: 0.5,
-            noise_method: "multiplicative", synapse: true, syn_weight: 0.8, syn_prob: 0.5, output_type: "both"
-        };
-    } else if (preset === "sparse_excitatory") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 150, input_current: 1.1, num_neurons: 10,
-            current_start: 0, current_duration: 150, noise: true, noise_intensity: 0.15,
-            noise_method: "additive", synapse: true, syn_weight: 0.1, syn_prob: 0.05, output_type: "both"
-        };
-    } else if (preset === "inhibition_dominated") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 200, input_current: 1.3, num_neurons: 20,
-            current_start: 0, current_duration: 200, noise: true, noise_intensity: 0.25,
-            noise_method: "additive", synapse: true, syn_weight: -0.5, syn_prob: 0.2, output_type: "both"
-        };
-    } else if (preset === "noisy_single") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 100, input_current: 1.0, num_neurons: 1,
-            current_start: 0, current_duration: 100, noise: true, noise_intensity: 0.5,
-            noise_method: "additive", synapse: false, syn_weight: 0.0, syn_prob: 0.0, output_type: "both"
-        };
-    } else if (preset === "synchronous_bursting") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 120, input_current: 1.4, num_neurons: 15,
-            current_start: 0, current_duration: 120, noise: true, noise_intensity: 0.1,
-            noise_method: "additive", synapse: true, syn_weight: 1.0, syn_prob: 0.8, output_type: "both"
-        };
-    } else if (preset === "minimal") {
-        presetValues = {
-            neuron_model: 'lif', threshold: 1.0, reset: 0.0, sim_time: 50, input_current: 1.0, num_neurons: 2,
-            current_start: 0, current_duration: 50, noise: false, noise_intensity: 0.0,
-            noise_method: "additive", synapse: true, syn_weight: 0.05, syn_prob: 1.0, output_type: "both"
-        };
-    }
-    // Merge preset values with defaults to ensure all fields are covered
-    setFields({...defaults, ...presetValues});
-    document.getElementById('preset-desc').innerText = presetDescriptions[preset] || presetDescriptions['custom'];
-    // Update UI based on new values
-    showModelFields(document.getElementById('neuron_model').value);
-    toggleNoiseOptions();
-    toggleSynapseOptions();
-}
-
-function setFields(values) {
-    // Helper to set value if element exists
-    const setValue = (name, value) => {
-        const el = document.querySelector(`[name="${name}"]`);
-        if (el) {
-            if (el.type === 'checkbox') el.checked = value;
-            else el.value = value;
-        }
-    };
-
-    // Set all fields from the values object
-    Object.keys(values).forEach(key => setValue(key, values[key]));
-}
-
-function getFields() {
-    const formData = new FormData(document.getElementById('simForm'));
-    const data = {};
-    for (let [key, value] of formData.entries()) {
-        const el = document.querySelector(`[name="${key}"]`);
-        if (el && el.type === 'number') {
-            data[key] = parseFloat(value);
-        } else if (el && el.type === 'checkbox') {
-            // Checkboxes need special handling if unchecked
-            data[key] = el.checked;
-        } else {
-            data[key] = value;
-        }
-    }
-    // Ensure checkboxes that might be missing are included as false
-    if (!data.noise) data.noise = false;
-    if (!data.synapse) data.synapse = false;
-
-    // Add model params not in form directly
-    data.izh_a = parseFloat(document.querySelector('[name="izh_a"]').value);
-    data.izh_b = parseFloat(document.querySelector('[name="izh_b"]').value);
-    data.izh_c = parseFloat(document.querySelector('[name="izh_c"]').value);
-    data.izh_d = parseFloat(document.querySelector('[name="izh_d"]').value);
-    data.adex_a = parseFloat(document.querySelector('[name="adex_a"]').value);
-    data.adex_b = parseFloat(document.querySelector('[name="adex_b"]').value);
-    data.adex_deltaT = parseFloat(document.querySelector('[name="adex_deltaT"]').value);
-    data.adex_tau_w = parseFloat(document.querySelector('[name="adex_tau_w"]').value);
-    data.custom_eqs = document.querySelector('[name="custom_eqs"]').value;
-    data.custom_threshold = document.querySelector('[name="custom_threshold"]').value;
-    data.custom_reset = document.querySelector('[name="custom_reset"]').value;
-    data.neuron_model = document.getElementById('neuron_model').value; // Add neuron model
-
-    return data;
-}
-
-function resetDefaults() {
-    setFields(defaults);
-    document.getElementById('preset').value = "custom";
-    document.getElementById('preset-desc').innerText = presetDescriptions['custom'];
-    // Update UI based on defaults
-    showModelFields(defaults.neuron_model);
-    toggleNoiseOptions();
-    toggleSynapseOptions();
-    // Clear local storage
-    if (window.localStorage) {
-        localStorage.removeItem('brian2sim-settings');
-    }
-}
-
-function toggleNoiseOptions() {
-    const noiseBox = document.getElementById('noise');
-    const noiseOptions = document.getElementById('noise-options');
-    noiseOptions.style.display = noiseBox.checked ? 'block' : 'none';
-    Array.from(noiseOptions.querySelectorAll('input,select')).forEach(el => {
-        el.disabled = !noiseBox.checked;
-    });
-}
-
-function toggleSynapseOptions() {
-    const synBox = document.getElementById('synapse');
-    const synOptions = document.getElementById('synapse-options');
-    synOptions.style.display = synBox.checked ? 'block' : 'none';
-    Array.from(synOptions.querySelectorAll('input,select')).forEach(el => {
-        el.disabled = !synBox.checked;
-    });
-}
-
-function showModelFields(model) {
-    const izhFields = document.getElementById('izhikevich-fields');
-    const adexFields = document.getElementById('adex-fields');
-    const customFields = document.getElementById('custom-fields');
-    izhFields.style.display = (model === 'izhikevich') ? 'block' : 'none';
-    adexFields.style.display = (model === 'adex') ? 'block' : 'none';
-    customFields.style.display = (model === 'custom') ? 'block' : 'none';
-    Array.from(izhFields.querySelectorAll('input')).forEach(el => { el.disabled = (model !== 'izhikevich'); });
-    Array.from(adexFields.querySelectorAll('input')).forEach(el => { el.disabled = (model !== 'adex'); });
-    Array.from(customFields.querySelectorAll('input,textarea')).forEach(el => { el.disabled = (model !== 'custom'); });
-
-    const thresholdReset = document.getElementById('threshold-reset-fields');
-    const thresholdInput = document.getElementById('threshold');
-    const resetInput = document.getElementById('reset');
-    const help = document.getElementById('threshold-reset-help');
-    if (model === 'lif') {
-        thresholdReset.style.display = 'block';
-        thresholdInput.disabled = false;
-        resetInput.disabled = false;
-        help.textContent = "Used for LIF only.";
-    } else {
-        thresholdReset.style.display = 'block'; // Keep visible but disabled
-        thresholdInput.disabled = true;
-        resetInput.disabled = true;
-        help.textContent = "Ignored for this model.";
-    }
-
-    const inputCurrentHelp = document.getElementById('input-current-help');
-    if (model === 'adex') {
-        inputCurrentHelp.textContent = "Units: pA (picoamperes) for AdEx.";
-    } else {
-        inputCurrentHelp.textContent = "Units: Arbitrary for LIF/Izhikevich.";
-    }
-}
-
-// 7. Simple client-side validation
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('simForm').addEventListener('submit', function(e) {
-        let valid = true;
-        let msg = [];
-        const numNeurons = parseInt(document.querySelector('[name="num_neurons"]').value);
-        const simTime = parseFloat(document.querySelector('[name="sim_time"]').value);
-
-        if (isNaN(numNeurons) || numNeurons < 1) {
-            valid = false;
-            msg.push("Number of neurons must be at least 1.");
-        }
-        if (isNaN(simTime) || simTime <= 0) {
-            valid = false;
-            msg.push("Simulation time must be a positive number.");
-        }
-        // Add more validation as needed
-
-        if (!valid) {
-            e.preventDefault();
-            alert("Please fix the following errors:\n- " + msg.join('\n- '));
-            document.getElementById('spinner').style.display = 'none'; // Hide spinner if validation fails
-        }
-    });
-});
-
-// 11. Keyboard navigation: focus styles for accessibility
-document.addEventListener('keydown', function(e) {
-    if (e.key === "Tab") {
-        document.body.classList.add('user-is-tabbing');
-    }
-});
-document.addEventListener('mousedown', function() {
-    document.body.classList.remove('user-is-tabbing');
-});
-</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
