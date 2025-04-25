@@ -14,8 +14,9 @@ from flask import Flask, render_template, request, send_from_directory, flash
 from brian2 import *
 
 if os.environ.get("BRIAN2_CODEGEN", "").lower() == "numpy":
-    prefs.codegen.target = 'numpy' # Use numpy code generation to avoid Cython compilation issues
-# else: use default (Cython)
+    prefs.codegen.target = 'numpy'  # Use NumPy backend on Render or when specified
+else:
+    prefs.codegen.target = 'cython'  # Use Cython locally for best performance
 
 import matplotlib
 matplotlib.use('Agg')  # Ensure matplotlib does not require a display
