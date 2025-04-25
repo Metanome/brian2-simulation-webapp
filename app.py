@@ -12,7 +12,8 @@ os.environ['MPLBACKEND'] = 'Agg'  # Use non-GUI backend for matplotlib
 
 from flask import Flask, render_template, request, send_from_directory, flash
 from brian2 import *
-set_device('runtime')
+set_device('runtime') # Use Brian2 runtime for better performance
+prefs.codegen.target = 'numpy' # Use numpy code generation for better performance
 import matplotlib
 matplotlib.use('Agg')  # Ensure matplotlib does not require a display
 import matplotlib.pyplot as plt
