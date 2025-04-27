@@ -1,6 +1,6 @@
 # Brian2 Web Simulation App
 
-A web-based interactive simulator for spiking neural networks using [Brian2](https://brian2.readthedocs.io/) and Flask.  
+A web-based interactive simulator for spiking neural networks using [Brian2](https://brian2.readthedocs.io/) and Flask.
 Users can configure neuron and network parameters, run simulations, visualize results, and download data.
 
 ## Goal
@@ -10,11 +10,11 @@ The main goal of this project is to make neural modeling and simulation with Bri
 
 - **Multiple neuron models:** LIF, Izhikevich, AdEx, and custom equations.
 - **Network options:** Synaptic weights, connection probability, noise, and more.
-- **Presets:** Quick-start scenarios for common network types.
+- **Presets:** Quick-start scenarios for common network types (selectable in the UI).
 - **Interactive and static plots:** View results with Plotly or Matplotlib.
 - **Download data:** Export simulation results as CSV or JSON.
 - **Responsive UI:** Modern, accessible, and mobile-friendly.
-- **Automatic Cleanup:** Old output files are automatically deleted to save disk space.
+- **Automatic Cleanup:** Old output files are automatically deleted from the `output/` folder to save disk space.
 
 ## Requirements
 
@@ -26,12 +26,14 @@ The main goal of this project is to make neural modeling and simulation with Bri
 - numpy
 - plotly
 
+All dependencies are listed in `requirements.txt`.
+
 ## Usage
 
 1. **Install dependencies:**
 
     ```bash
-    pip install flask brian2 matplotlib pandas numpy plotly
+    pip install -r requirements.txt
     ```
 
 2. **Clone the repository:**
@@ -47,10 +49,10 @@ The main goal of this project is to make neural modeling and simulation with Bri
     python app.py
     ```
 
-4. **Open your browser:**  
+4. **Open your browser:**
    Go to [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
 
-5. **Configure and run simulations:**  
+5. **Configure and run simulations:**
    - Adjust parameters or select a preset in the left panel.
    - Click "Run Simulation" to see plots and download data.
    - Use output options below the results to change plot type or output.
@@ -63,13 +65,18 @@ The main goal of this project is to make neural modeling and simulation with Bri
 ## File Structure
 
 - `app.py` — Main Flask application and simulation logic.
-- `templates/index.html` — Main UI (Jinja2 template).
-- `static/style.css` — Stylesheet for the web UI.
-- `static/` — Folder for generated plots and data files.
+- `requirements.txt` — Python dependencies.
+- `templates/` — Jinja2 HTML templates (main UI in `index.html`).
+- `static/` — Static files (CSS in `css/style.css`, JS in `js/main.js`).
+- `output/` — Folder for generated plots and data files (auto-cleaned).
+- `models/` — Neuron model definitions (LIF, Izhikevich, AdEx, custom).
+- `plots/` — Plotting utilities.
+- `simulator/` — Simulation logic and helpers.
+- `utils/` — Export and utility functions.
 
 ## Notes
 
-- **Temporary files** (plots/data) are auto-cleaned from `static/` after ~10 minutes.
+- **Temporary files** (plots/data) are auto-cleaned from `output/` after ~3 minutes.
 - **Custom models:** You can enter your own equations, threshold, and reset rules.
 - **Accessibility:** Tooltips and ARIA live regions are included for usability.
 
