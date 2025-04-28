@@ -96,7 +96,7 @@ All dependencies are listed in `requirements.txt`.
 
 This project is licensed under the GNU General Public License v3.0.
 
-See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.
+See [LICENSE](https://github.com/Metanome/brian2sim-web/blob/main/LICENSE) for details.
 
 ## Acknowledgments
 
