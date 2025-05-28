@@ -157,23 +157,92 @@ This file contains the main HTML structure for the simulation UI, including the 
             </div>
 
             <!-- Synaptic interaction options -->
-            <div class="section-title">5. Synaptic Interactions</div>
-            <div class="form-group form-row">
-                <label for="synapse">Enable Synapses:</label>
-                <input type="checkbox" name="synapse" id="synapse" {% if synapse %}checked{% endif %} onchange="toggleSynapseOptions()">
-                <span class="tooltip" title="Allow neurons to interact via synapses (network connectivity). Synaptic events include a biologically realistic delay.">?</span>
+            <div class="section-title">5. Network Options</div>
+            <div class="form-group">
+            <div class="form-row">
+                <input type="checkbox" id="synapse" name="synapse" {% if synapse %}checked{% endif %}>
+                <label for="synapse">Enable synaptic connections</label>
             </div>
-            <div id="synapse-options" class="form-group" style="display: none;">
+            
+            <div id="synapse-options">
                 <div class="form-row">
-                    <label for="syn_weight">Synaptic Weight:</label>
-                    <input type="number" step="0.01" name="syn_weight" id="syn_weight" value="{{ syn_weight or 0.2 }}">
-                    <span class="tooltip" title="Strength of each synaptic connection (how much a spike affects other neurons). Units depend on model.">?</span>
+                <label for="syn_weight">Synaptic Weight:</label>
+                <input type="number" id="syn_weight" name="syn_weight" value="{{ syn_weight or 0.2 }}" step="0.1" min="0">
                 </div>
+                
                 <div class="form-row">
+                <label for="topology_type">Network Topology:</label>
+                <select id="topology_type" name="topology_type">
+                    <option value="random" {% if topology_type == 'random' %}selected{% endif %}>Random (Erdős–Rényi)</option>
+                    <option value="small_world" {% if topology_type == 'small_world' %}selected{% endif %}>Small World (Watts-Strogatz)</option>
+                    <option value="scale_free" {% if topology_type == 'scale_free' %}selected{% endif %}>Scale Free (Barabási–Albert)</option>
+                    <option value="regular" {% if topology_type == 'regular' %}selected{% endif %}>Regular Lattice</option>
+                    <option value="modular" {% if topology_type == 'modular' %}selected{% endif %}>Modular Network</option>
+                </select>
+                <span class="tooltip" title="Small World: Creates networks with both local clustering and short path lengths. Scale-Free: Creates networks with some highly connected hub neurons. Regular: Creates networks with fixed connectivity patterns.">?</span>
+                </div>
+                
+                <!-- Dynamic topology parameters that change based on topology selection -->
+                <div id="topology-params">
+                <!-- Random topology parameters -->
+                <div class="topology-param" id="random-params">
+                    <div class="form-row">
                     <label for="syn_prob">Connection Probability:</label>
-                    <input type="number" step="0.01" min="0" max="1" name="syn_prob" id="syn_prob" value="{{ syn_prob or 0.2 }}">
-                    <span class="tooltip" title="Probability (0 to 1) that any two neurons are connected by a synapse.">?</span>
+                    <input type="number" id="syn_prob" name="syn_prob" value="{{ syn_prob or 0.2 }}" 
+       step="0.05" min="0" max="1" onchange="constrainProbability(this)">
+                    </div>
                 </div>
+                
+                <!-- Small World parameters -->
+                <div class="topology-param" id="small-world-params" style="display:none">
+                    <div class="form-row">
+                        <label for="topology_k">Neighbors (k):</label>
+                        <input type="number" id="topology_k" name="topology_k" value="{{ topology_k or 2 }}" 
+                               step="2" min="2" onchange="ensureEven(this)">
+                        <span class="tooltip" title="Number of neighbors to connect (must be an even number)">?</span>
+                    </div>
+                    <div class="form-row">
+                        <label for="topology_p_rewire">Rewiring Probability:</label>
+                        <input type="number" id="topology_p_rewire" name="topology_p_rewire" value="{{ topology_p_rewire or 0.1 }}" 
+                               step="0.05" min="0" max="1" onchange="constrainProbability(this)">
+                        <span class="tooltip" title="Probability of rewiring each connection to create shortcuts">?</span>
+                    </div>
+                </div>
+                
+                <!-- Scale Free parameters -->
+                <div class="topology-param" id="scale-free-params" style="display:none">
+                    <div class="form-row">
+                    <label for="topology_m">New Connections (m):</label>
+                    <input type="number" id="topology_m" name="topology_m" value="{{ topology_m or 2 }}" step="1" min="1">
+                    </div>
+                </div>
+                
+                <!-- Regular Lattice parameters -->
+                <div class="topology-param" id="regular-params" style="display:none">
+                    <div class="form-row">
+                    <label for="topology_k_reg">Neighbors (k):</label>
+                    <input type="number" id="topology_k_reg" name="topology_k_reg" value="{{ topology_k_reg or 2 }}" 
+       step="2" min="2" onchange="ensureEven(this)">
+                    </div>
+                </div>
+                
+                <!-- Modular Network parameters -->
+                <div class="topology-param" id="modular-params" style="display:none">
+                    <div class="form-row">
+                    <label for="topology_n_modules">Number of Modules:</label>
+                    <input type="number" id="topology_n_modules" name="topology_n_modules" value="{{ topology_n_modules or 4 }}" step="1" min="2">
+                    </div>
+                    <div class="form-row">
+                    <label for="topology_p_intra">Intra-module Probability:</label>
+                    <input type="number" id="topology_p_intra" name="topology_p_intra" value="{{ topology_p_intra or 0.2 }}" step="0.05" min="0" max="1" onchange="constrainProbability(this)">
+                    </div>
+                    <div class="form-row">
+                    <label for="topology_p_inter">Inter-module Probability:</label>
+                    <input type="number" id="topology_p_inter" name="topology_p_inter" value="{{ topology_p_inter or 0.01 }}" step="0.01" min="0" max="1" onchange="constrainProbability(this)">
+                    </div>
+                </div>
+                </div>
+            </div>
             </div>
         </div> <!-- End options-panel -->
 
@@ -197,32 +266,48 @@ This file contains the main HTML structure for the simulation UI, including the 
 
         <!-- Output plots and download links (static or interactive) -->
         {% if plot_type == 'static' %}
-            {% if img_url %}
-                <div class="output">
-                    <h4>Membrane Potential Plot (Static)</h4>
-                    <img src="{{ img_url }}" alt="Membrane Potential Plot">
-                </div>
-            {% endif %}
-            {% if raster_url %}
-                <div class="output">
-                    <h4>Spike Raster Plot (Static)</h4>
-                    <img src="{{ raster_url }}" alt="Spike Raster Plot">
-                </div>
-            {% endif %}
-        {% else %}
-            {% if plotly_voltage_html %}
-                <div class="output">
-                    <h4>Membrane Potential Plot (Interactive)</h4>
-                    <div>{{ plotly_voltage_html|safe }}</div>
-                </div>
-            {% endif %}
-            {% if plotly_raster_html %}
-                <div class="output">
-                    <h4>Spike Raster Plot (Interactive)</h4>
-                    <div>{{ plotly_raster_html|safe }}</div>
-                </div>
-            {% endif %}
-        {% endif %}
+    {% if output_type in ['voltage', 'both', 'all'] and img_url %}
+        <div class="output">
+            <h4>Membrane Potential Plot (Static)</h4>
+            <img src="{{ img_url }}" alt="Membrane Potential Plot">
+        </div>
+    {% endif %}
+    
+    {% if output_type in ['raster', 'both', 'all'] and raster_url %}
+        <div class="output">
+            <h4>Spike Raster Plot (Static)</h4>
+            <img src="{{ raster_url }}" alt="Spike Raster Plot">
+        </div>
+    {% endif %}
+    
+    {% if output_type == 'all' and synapse and topology_url %}
+        <div class="output">
+            <h4>Network Topology (Static)</h4>
+            <img src="{{ topology_url }}" alt="Network Topology Plot">
+        </div>
+    {% endif %}
+{% else %}
+    {% if output_type in ['voltage', 'both', 'all'] and plotly_voltage_html %}
+        <div class="output">
+            <h4>Membrane Potential Plot (Interactive)</h4>
+            <div>{{ plotly_voltage_html|safe }}</div>
+        </div>
+    {% endif %}
+    
+    {% if output_type in ['raster', 'both', 'all'] and plotly_raster_html %}
+        <div class="output">
+            <h4>Spike Raster Plot (Interactive)</h4>
+            <div>{{ plotly_raster_html|safe }}</div>
+        </div>
+    {% endif %}
+    
+    {% if output_type == 'all' and synapse and plotly_topology_html %}
+        <div class="output">
+            <h4>Network Topology (Interactive)</h4>
+            <div>{{ plotly_topology_html|safe }}</div>
+        </div>
+    {% endif %}
+{% endif %}
 
         {% if data_url or json_url %}
         <div class="downloads">
@@ -247,11 +332,12 @@ This file contains the main HTML structure for the simulation UI, including the 
         <div class="form-group form-row">
             <label for="output_type">Output Type:</label>
             <select name="output_type" id="output_type">
-                <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both</option>
+                <option value="both" {% if output_type == 'both' %}selected{% endif %}>Both (Voltage & Raster)</option>
                 <option value="voltage" {% if output_type == 'voltage' %}selected{% endif %}>Voltage Only</option>
                 <option value="raster" {% if output_type == 'raster' %}selected{% endif %}>Raster Only</option>
+                <option value="all" {% if output_type == 'all' %}selected{% endif %}>All (Voltage, Raster & Topology)</option>
             </select>
-            <span class="tooltip" title="Choose which plots to display: membrane voltage, spike raster, or both.">?</span>
+            <span class="tooltip" title="Choose which plots to display: membrane voltage, spike raster, network topology, or combinations.">?</span>
         </div>
         <div class="form-group form-row">
             <label for="plot_type">Plot Type:</label>
@@ -266,12 +352,39 @@ This file contains the main HTML structure for the simulation UI, including the 
             <button type="button" onclick="resetDefaults()">Reset to Defaults</button>
         </div>
 
+        <!-- Configuration export/import buttons -->
+        <div class="button-group">
+          <button type="button" id="export-config" class="btn btn-secondary" onclick="exportConfiguration()">
+            <i class="fas fa-download"></i> Export Config
+          </button>
+          <button type="button" id="import-config" class="btn btn-secondary" onclick="importConfiguration()">
+            <i class="fas fa-upload"></i> Import Config
+          </button>
+        </div>
+
+        <div class="button-group">
+          <button type="button" onclick="saveConfigToServer()" class="btn btn-secondary">
+            <i class="fas fa-cloud-upload-alt"></i> Save to Server
+          </button>
+          <input type="text" id="config-id" placeholder="Config ID">
+          <button type="button" onclick="loadConfigFromServer(document.getElementById('config-id').value)" class="btn btn-secondary">
+            <i class="fas fa-cloud-download-alt"></i> Load from Server
+          </button>
+        </div>
+
         <!-- Spinner overlay: covers output-panel during simulation -->
         <div id="spinner" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:10; align-items:center; justify-content:center; pointer-events:none;" aria-live="polite">
             <span>Running simulation, please wait...</span>
         </div>
     </div> <!-- End output-panel -->
   </div> <!-- End main-flex -->
+</form>
+<form action="/generate_code" method="post" id="codeGenForm">
+  <!-- Hidden inputs will be populated by JS -->
+  <div id="hiddenInputs"></div>
+  <button type="button" onclick="prepareCodeGeneration()" class="btn btn-info">
+    <i class="fas fa-code"></i> Generate Python Code
+  </button>
 </form>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
