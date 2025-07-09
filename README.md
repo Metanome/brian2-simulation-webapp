@@ -147,12 +147,6 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 - UI/UX improvements
 - Documentation enhancements
 
-## License
-
-This project is licensed under the GNU General Public License v3.0.
-
-See [LICENSE](https://github.com/Metanome/brian2sim-web/blob/main/LICENSE) for details.
-
 ## Acknowledgments
 
 - [Brian2](https://brian2.readthedocs.io/) for the powerful simulation engine
